@@ -1,0 +1,56 @@
+namespace NumbatLogic
+{
+	class DatabseConnection
+	{
+		private PgSqlBackend* m_pBackend;
+
+		private InternalString* m_sHost;
+		private InternalString* m_sUsername;
+		private InternalString* m_sPassword;
+		private InternalString* m_sDatabase;
+
+		public construct(string sxHost, string sxUsername, string sxPassword, string sxDatabase)
+		{
+			m_sHost = own new InternalString(sxHost);
+			m_sUsername = own new InternalString(sxUsername);
+			m_sPassword = own new InternalString(sxPassword);
+			m_sDatabase = own new InternalString(sxDatabase);
+		}
+
+		// Lazy transactions
+		private bool m_bInTransaction;
+		private bool m_bInLazyTransaction;
+
+		public void TransactionBegin()
+		{
+			Assert::Plz(!m_bInLazyTransaction);
+			m_bInLazyTransaction = true;
+		}
+
+		public void TransactionCommit()
+		{
+			Assert::Plz(m_bInLazyTransaction);
+
+			// COMMIT;
+
+			m_bInLazyTransaction = false;
+		}
+
+		public void TransactionAbort()
+		{
+			Assert::Plz(m_bInLazyTransaction);
+
+			// ROLLBACK;
+
+			m_bInLazyTransaction = false;
+		}
+
+		public void __PromoteLazyTransaction()
+		{
+			if (m_bInLazyTransaction && !m_bInTransaction)
+			{
+				// "BEGIN DEFERRABLE;";
+			}
+		}
+	}
+}

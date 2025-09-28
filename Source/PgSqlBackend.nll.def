@@ -1,0 +1,6 @@
+namespace NumbatLogic
+{
+	class PgSqlBackend
+	{
+	}
+}

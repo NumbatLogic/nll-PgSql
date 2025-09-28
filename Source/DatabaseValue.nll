@@ -1,0 +1,26 @@
+namespace NumbatLogic
+{
+	class DatabaseValue
+	{
+		public enum Type {
+			UINT32,
+			STRING
+		}
+
+		public Type __eType;
+		public Uint32 __nUint32;
+		private InternalString* __sString;
+		
+		public construct(Uint32 nUint32)
+		{
+			__eType = Type::UINT32;
+			__nUint32 = nUint32;
+		}
+
+		public construct(string sxString)
+		{
+			__eType = Type::STRING;
+			__sString = own new InternalString(sxString);
+		}
+	}
+}

@@ -1,0 +1,54 @@
+namespace NumbatLogic
+{
+	class DatabaseQueryParameter
+	{
+		public InternalString* __sName;
+		public DatabaseValue* __pValue;
+
+		public construct(string sxName, Uint32 nValue)
+		{
+			__sName = own new InternalString(sxName);
+			__pValue = own new DatabaseValue(nValue);
+		}
+
+		public construct(string sxName, string sxValue)
+		{
+			__sName = own new InternalString(sxName);
+			__pValue = own new DatabaseValue(sxValue);
+		}
+	}
+
+	class DatabaseQuery
+	{
+		private InternalString* m_sSql;
+		private OwnedVector<DatabaseQueryParameter>* m_pParameterVector;
+
+		public construct()
+		{
+			m_pParameterVector = own new OwnedVector<DatabaseQueryParameter>();
+		}
+
+		public void SetSql(string sxSql)
+		{
+			Assert::Plz(m_sSql == null);
+			m_sSql = own new InternalString(sxSql);
+		}
+
+		public void SetSql(InternalString sSql)
+		{
+			SetSql(sSql.GetExternalString());
+		}
+
+		public void SetParameter(string sxName, Uint32 nValue)
+		{
+			DatabaseQueryParameter* pParameter = own new DatabaseQueryParameter(sxName, nValue);
+			m_pParameterVector.PushBack(disown pParameter);
+		}
+
+		public void SetParameter(string sxName, string sxValue)
+		{
+			DatabaseQueryParameter* pParameter = own new DatabaseQueryParameter(sxName, sxValue);
+			m_pParameterVector.PushBack(disown pParameter);
+		}
+	}
+}
