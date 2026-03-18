@@ -18,6 +18,8 @@ namespace NumbatLogic
 			m_sPassword = own new InternalString(sxPassword);
 			m_sDatabase = own new InternalString(sxDatabase);
 			m_bVerbose = bVerbose;
+			m_bInTransaction = false;
+			m_bInLazyTransaction = false;
 		}
 
 		public bool Connect()
@@ -34,6 +36,7 @@ namespace NumbatLogic
 
 		public bool ExecuteRaw(string sxSql)
 		{
+			__PromoteLazyTransaction();
 			return m_pBackend.Exec(sxSql);
 		}
 
@@ -49,6 +52,8 @@ namespace NumbatLogic
 
 		public bool ExecuteQuery(DatabaseQuery pQuery)
 		{
+			__PromoteLazyTransaction();
+
 			string sxSql = pQuery.GetSql();
 			int nParams = pQuery.GetParameterCount();
 
@@ -125,32 +130,48 @@ namespace NumbatLogic
 		public void TransactionBegin()
 		{
 			Assert::Plz(!m_bInLazyTransaction);
+			Assert::Plz(!m_bInTransaction);
 			m_bInLazyTransaction = true;
+			m_bInTransaction = false;
 		}
 
 		public void TransactionCommit()
 		{
 			Assert::Plz(m_bInLazyTransaction);
 
-			// COMMIT;
+			if (m_bInTransaction)
+			{
+				__PromoteLazyTransaction();
+				bool bOk = m_pBackend.Exec("COMMIT;");
+				Assert::Plz(bOk);
+			}
 
 			m_bInLazyTransaction = false;
+			m_bInTransaction = false;
 		}
 
 		public void TransactionAbort()
 		{
 			Assert::Plz(m_bInLazyTransaction);
 
-			// ROLLBACK;
+			if (m_bInTransaction)
+			{
+				__PromoteLazyTransaction();
+				bool bOk = m_pBackend.Exec("ROLLBACK;");
+				Assert::Plz(bOk);
+			}
 
 			m_bInLazyTransaction = false;
+			m_bInTransaction = false;
 		}
 
 		public void __PromoteLazyTransaction()
 		{
 			if (m_bInLazyTransaction && !m_bInTransaction)
 			{
-				// "BEGIN DEFERRABLE;";
+				bool bOk = m_pBackend.Exec("BEGIN;");
+				Assert::Plz(bOk);
+				m_bInTransaction = true;
 			}
 		}
 	}
