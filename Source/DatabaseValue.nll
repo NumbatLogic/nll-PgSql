@@ -22,5 +22,16 @@ namespace NumbatLogic
 			__eType = Type::STRING;
 			__sString = own new InternalString(sxString);
 		}
+
+		public string GetAsString()
+		{
+			if (__eType == Type::UINT32)
+			{
+				InternalString* p = own new InternalString("");
+				p.AppendUint32(__nUint32);
+				return p.GetExternalString();
+			}
+			return __sString.GetExternalString();
+		}
 	}
 }

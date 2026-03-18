@@ -22,10 +22,12 @@ namespace NumbatLogic
 	{
 		private InternalString* m_sSql;
 		private OwnedVector<DatabaseQueryParameter>* m_pParameterVector;
+		private PgSqlResult* m_pResult;
 
 		public construct()
 		{
 			m_pParameterVector = own new OwnedVector<DatabaseQueryParameter>();
+			m_pResult = null;
 		}
 
 		public void SetSql(string sxSql)
@@ -49,6 +51,116 @@ namespace NumbatLogic
 		{
 			DatabaseQueryParameter* pParameter = own new DatabaseQueryParameter(sxName, sxValue);
 			m_pParameterVector.PushBack(disown pParameter);
+		}
+
+		public string GetSql()
+		{
+			if (m_sSql == null)
+				return "";
+			return m_sSql.GetExternalString();
+		}
+
+		public int GetParameterCount()
+		{
+			return m_pParameterVector.GetSize();
+		}
+
+		public string GetParameterName(int nIndex)
+		{
+			return m_pParameterVector.Get(nIndex).__sName.GetExternalString();
+		}
+
+		public string GetParameterString(int nIndex)
+		{
+			return m_pParameterVector.Get(nIndex).__pValue.GetAsString();
+		}
+
+		public bool Execute(DatabaseConnection pConn)
+		{
+			return pConn.ExecuteQuery(this);
+		}
+
+		public void SetResult(PgSqlResult** pResult)
+		{
+			if (m_pResult != null)
+				delete m_pResult;
+			m_pResult = own pResult;
+		}
+
+		public int GetRowCount()
+		{
+			if (m_pResult == null)
+				return 0;
+			return m_pResult.GetRowCount();
+		}
+
+		public int GetColumnCount()
+		{
+			if (m_pResult == null)
+				return 0;
+			return m_pResult.GetColumnCount();
+		}
+
+		public bool GetString(int nRow, int nCol, InternalString pOut)
+		{
+			if (m_pResult == null)
+				return false;
+			return m_pResult.GetString(nRow, nCol, pOut);
+		}
+
+		public bool GetBool(int nRow, int nCol, ref bool pOut)
+		{
+			if (m_pResult == null)
+				return false;
+			return m_pResult.GetBool(nRow, nCol, ref pOut);
+		}
+		public bool GetInt8(int nRow, int nCol, ref Int8 pOut)
+		{
+			if (m_pResult == null)
+				return false;
+			return m_pResult.GetInt8(nRow, nCol, ref pOut);
+		}
+		public bool GetInt16(int nRow, int nCol, ref Int16 pOut)
+		{
+			if (m_pResult == null)
+				return false;
+			return m_pResult.GetInt16(nRow, nCol, ref pOut);
+		}
+		public bool GetInt32(int nRow, int nCol, ref Int32 pOut)
+		{
+			if (m_pResult == null)
+				return false;
+			return m_pResult.GetInt32(nRow, nCol, ref pOut);
+		}
+		public bool GetUint8(int nRow, int nCol, ref Uint8 pOut)
+		{
+			if (m_pResult == null)
+				return false;
+			return m_pResult.GetUint8(nRow, nCol, ref pOut);
+		}
+		public bool GetUint16(int nRow, int nCol, ref Uint16 pOut)
+		{
+			if (m_pResult == null)
+				return false;
+			return m_pResult.GetUint16(nRow, nCol, ref pOut);
+		}
+		public bool GetUint32(int nRow, int nCol, ref Uint32 pOut)
+		{
+			if (m_pResult == null)
+				return false;
+			return m_pResult.GetUint32(nRow, nCol, ref pOut);
+		}
+		public bool GetFloat(int nRow, int nCol, ref float pOut)
+		{
+			if (m_pResult == null)
+				return false;
+			return m_pResult.GetFloat(nRow, nCol, ref pOut);
+		}
+		public bool GetDouble(int nRow, int nCol, ref double pOut)
+		{
+			if (m_pResult == null)
+				return false;
+			return m_pResult.GetDouble(nRow, nCol, ref pOut);
 		}
 	}
 }

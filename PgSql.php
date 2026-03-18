@@ -18,20 +18,15 @@
 
 		public function GetIncludeDirectoryArray($sConfiguration, $sArchitecture)
 		{
-			$sArray = array(
-			//	"../LangShared"
-			//	"../ThirdParty",
-			//	"../Package",
-			//	"../Engine",
-			);
-
-			/*if ($this->m_sPlatform == PLATFORM_WINDOWS)
-			{
-				$sArray[] = "../../../Library/Windows/GLEW/include";
-				$sArray[] = "../../../Library/Windows/GLFW/include";
-				$sArray[] = "../../../Library/Windows/libcurl/include";
-			}*/
-
+			$sArray = array();
+			// PostgreSQL (libpq) include path for libpq-fe.h
+			// Common locations: Debian/Ubuntu use /usr/include/postgresql; others may use /usr/include
+			if (is_dir("/usr/include/postgresql"))
+				$sArray[] = "/usr/include/postgresql";
+			else
+				$sArray[] = "/usr/include";
+			// LangShared InternalString for m_lastError
+			$sArray[] = dirname(__FILE__) . "/../LangShared/InternalString/CPP";
 			return $sArray;
 		}
 

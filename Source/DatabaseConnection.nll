@@ -1,6 +1,6 @@
 namespace NumbatLogic
 {
-	class DatabseConnection
+	class DatabaseConnection
 	{
 		private PgSqlBackend* m_pBackend;
 
@@ -8,13 +8,114 @@ namespace NumbatLogic
 		private InternalString* m_sUsername;
 		private InternalString* m_sPassword;
 		private InternalString* m_sDatabase;
+		private bool m_bVerbose;
 
-		public construct(string sxHost, string sxUsername, string sxPassword, string sxDatabase)
+		public construct(string sxHost, string sxUsername, string sxPassword, string sxDatabase, bool bVerbose)
 		{
+			m_pBackend = own new PgSqlBackend();
 			m_sHost = own new InternalString(sxHost);
 			m_sUsername = own new InternalString(sxUsername);
 			m_sPassword = own new InternalString(sxPassword);
 			m_sDatabase = own new InternalString(sxDatabase);
+			m_bVerbose = bVerbose;
+		}
+
+		public bool Connect()
+		{
+			if (!m_pBackend.Connect(m_sHost.GetExternalString(), m_sUsername.GetExternalString(), m_sPassword.GetExternalString(), m_sDatabase.GetExternalString()))
+				return false;
+			if (m_bVerbose)
+				m_pBackend.Exec("SET client_min_messages = NOTICE;");
+			else
+				m_pBackend.Exec("SET client_min_messages = ERROR;");
+
+			return true;
+		}
+
+		public bool ExecuteRaw(string sxSql)
+		{
+			return m_pBackend.Exec(sxSql);
+		}
+
+		public bool QueryExists(string sxSql)
+		{
+			return m_pBackend.QueryExists(sxSql);
+		}
+
+		public string GetLastError()
+		{
+			return m_pBackend.GetLastError();
+		}
+
+		public bool ExecuteQuery(DatabaseQuery pQuery)
+		{
+			string sxSql = pQuery.GetSql();
+			int nParams = pQuery.GetParameterCount();
+
+			// Change $parameter to $1 etc
+			// Imperfect as it could break within strings...
+			InternalString* sSqlOut = own new InternalString(sxSql);
+			for (int p = 0; p < nParams; p++)
+			{
+				string sxName = pQuery.GetParameterName(p);
+				if (sxName == null)
+					continue;
+
+				InternalString* sFind = own new InternalString("$");
+				sFind.Append(sxName);
+
+				InternalString* sReplace = own new InternalString("$");
+				sReplace.AppendInt(p + 1);
+
+				sSqlOut.Replace(sFind.GetExternalString(), sReplace.GetExternalString());
+			}
+
+			// Should probably look at binary packing one day...
+			InternalString* pParamBuf = own new InternalString("");
+			for (int i = 0; i < nParams; i++)
+			{
+				if (i > 0)
+					pParamBuf.AppendChar(cast UniChar(1));
+				pParamBuf.Append(pQuery.GetParameterString(i));
+			}
+
+			string sxFinalSql = sSqlOut.GetExternalString();
+			PgSqlResult* pResult = own m_pBackend.ExecuteQuery(sxFinalSql, nParams, pParamBuf.GetExternalString());
+			if (pResult == null)
+			{
+				if (m_bVerbose)
+				{
+					InternalString* sMsg = own new InternalString("DatabaseConnection::ExecuteQuery failed.\nSQL: ");
+					sMsg.Append(sxFinalSql);
+					string sxErr = GetLastError();
+					if (sxErr != null)
+					{
+						sMsg.Append("\nError: ");
+						sMsg.Append(sxErr);
+					}
+					Console::Log(sMsg.GetExternalString());
+				}
+				return false;
+			}
+			pQuery.SetResult(disown pResult);
+			return true;
+		}
+
+		public bool GetLastAppliedSchemaName(InternalString pOut)
+		{
+			DatabaseQuery* pQuery = own new DatabaseQuery();
+			pQuery.SetSql("SELECT \"sSchemaName\" FROM \"__tblMigration\" ORDER BY \"dtAppliedAt\" DESC LIMIT 1");
+			if (!ExecuteQuery(pQuery) || pQuery.GetRowCount() == 0)
+				return false;
+			return pQuery.GetString(0, 0, pOut);
+		}
+		public bool GetLastAppliedFileName(InternalString pOut)
+		{
+			DatabaseQuery* pQuery = own new DatabaseQuery();
+			pQuery.SetSql("SELECT \"sFileName\" FROM \"__tblMigration\" ORDER BY \"dtAppliedAt\" DESC LIMIT 1");
+			if (!ExecuteQuery(pQuery) || pQuery.GetRowCount() == 0)
+				return false;
+			return pQuery.GetString(0, 0, pOut);
 		}
 
 		// Lazy transactions
