@@ -10,6 +10,8 @@ namespace NumbatLogic
 		private InternalString* m_sDatabase;
 		private bool m_bVerbose;
 
+		private InternalString* m_sCachedLastError;
+
 		public construct(string sxHost, string sxUsername, string sxPassword, string sxDatabase, bool bVerbose)
 		{
 			m_pBackend = own new PgSqlBackend();
@@ -36,22 +38,30 @@ namespace NumbatLogic
 
 		public bool ExecuteRaw(string sxSql)
 		{
+			if (m_sCachedLastError != null)
+				delete m_sCachedLastError;
 			__PromoteLazyTransaction();
 			return m_pBackend.Exec(sxSql);
 		}
 
 		public bool QueryExists(string sxSql)
 		{
+			if (m_sCachedLastError != null)
+				delete m_sCachedLastError;
 			return m_pBackend.QueryExists(sxSql);
 		}
 
 		public string GetLastError()
 		{
+			if (m_sCachedLastError != null)
+				return m_sCachedLastError.GetExternalString();
 			return m_pBackend.GetLastError();
 		}
 
 		public bool ExecuteQuery(DatabaseQuery pQuery)
 		{
+			if (m_sCachedLastError != null)
+				delete m_sCachedLastError;
 			__PromoteLazyTransaction();
 
 			string sxSql = pQuery.GetSql();
@@ -106,23 +116,6 @@ namespace NumbatLogic
 			return true;
 		}
 
-		public bool GetLastAppliedSchemaName(InternalString pOut)
-		{
-			DatabaseQuery* pQuery = own new DatabaseQuery();
-			pQuery.SetSql("SELECT \"sSchemaName\" FROM \"__tblMigration\" ORDER BY \"dtAppliedAt\" DESC LIMIT 1");
-			if (!ExecuteQuery(pQuery) || pQuery.GetRowCount() == 0)
-				return false;
-			return pQuery.GetString(0, 0, pOut);
-		}
-		public bool GetLastAppliedFileName(InternalString pOut)
-		{
-			DatabaseQuery* pQuery = own new DatabaseQuery();
-			pQuery.SetSql("SELECT \"sFileName\" FROM \"__tblMigration\" ORDER BY \"dtAppliedAt\" DESC LIMIT 1");
-			if (!ExecuteQuery(pQuery) || pQuery.GetRowCount() == 0)
-				return false;
-			return pQuery.GetString(0, 0, pOut);
-		}
-
 		// Lazy transactions
 		private bool m_bInTransaction;
 		private bool m_bInLazyTransaction;
@@ -133,6 +126,9 @@ namespace NumbatLogic
 			Assert::Plz(!m_bInTransaction);
 			m_bInLazyTransaction = true;
 			m_bInTransaction = false;
+
+			if (m_sCachedLastError != null)
+				delete m_sCachedLastError;
 		}
 
 		public void TransactionCommit()
@@ -156,6 +152,12 @@ namespace NumbatLogic
 
 			if (m_bInTransaction)
 			{
+				if (m_sCachedLastError != null)
+					delete m_sCachedLastError;
+				string sxErr = GetLastError();
+				if (sxErr != null)
+					m_sCachedLastError = own new InternalString(sxErr);
+
 				__PromoteLazyTransaction();
 				bool bOk = m_pBackend.Exec("ROLLBACK;");
 				Assert::Plz(bOk);
