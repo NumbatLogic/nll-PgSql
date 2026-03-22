@@ -1,6 +1,6 @@
 #include "PgSqlBackend.hpp"
 #include "PgSqlResult.hpp"
-#include "../../../LangShared/InternalString/CPP/InternalString.hpp"
+#include "../../../LangShared/Source/InternalString/CPP/InternalString.hpp"
 #include <string>
 #include <vector>
 
