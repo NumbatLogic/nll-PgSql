@@ -4,7 +4,7 @@ using Npgsql;
 
 namespace NumbatLogic
 {
-	class PgSqlResult
+	public class PgSqlResult
 	{
 		private readonly List<object[]> m_pRows;
 		private readonly int m_nColumnCount;

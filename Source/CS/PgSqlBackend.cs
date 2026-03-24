@@ -4,7 +4,7 @@ using Npgsql;
 
 namespace NumbatLogic
 {
-	class PgSqlBackend
+	public class PgSqlBackend
 	{
 		private NpgsqlConnection m_pConn;
 		private string m_sLastError;
