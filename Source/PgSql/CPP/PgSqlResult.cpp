@@ -1,5 +1,5 @@
 #include "PgSqlResult.hpp"
-#include "../../../LangShared/Source/InternalString/CPP/InternalString.hpp"
+#include "../../../../LangShared/Source/InternalString/CPP/InternalString.hpp"
 #include <cstdlib>
 #include <cstring>
 

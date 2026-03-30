@@ -4,7 +4,10 @@
 		public function __construct($sAction)
 		{
 			parent::__construct($sAction);
-			$this->m_xFileArray = ProjectGen_ParseDirectory(dirname(__FILE__), ProjectGen_GetSourceRegex($sAction));
+			$this->m_xFileArray = array_merge(
+				ProjectGen_ParseDirectory(dirname(__FILE__), ProjectGen_GetSourceRegex($sAction)),
+				ProjectGen_ParseDirectory(dirname(__FILE__) . "/../../Transpiled/PgSql", ProjectGen_GetSourceRegex($sAction))
+			);
 		}
 
 		public function GetName() { return "PgSql"; }
