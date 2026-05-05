@@ -1,0 +1,146 @@
+namespace NumbatLogic
+{
+	namespace Database
+	{
+		class OrmFields_Roundtrip
+		{
+			private static bool __FloatNear(float a, float b)
+			{
+				float d = a - b;
+				if (d < 0)
+					d = -d;
+				return d < 0.0001f;
+			}
+
+			private static bool __DoubleNear(double a, double b)
+			{
+				double d = a - b;
+				if (d < 0)
+					d = -d;
+				return d < 0.0000001;
+			}
+
+			public static void Run()
+			{
+				DatabaseConnection* pDb = own TestUtils::ConnectTestDatabase();
+
+				TestUtils::ExecuteSql("DROP TABLE IF EXISTS \"PGT_tblOrmFieldsRoundtrip\" CASCADE;", pDb);
+
+				InternalString* pCreate = own new InternalString("");
+				pCreate.Append("CREATE TABLE \"PGT_tblOrmFieldsRoundtrip\" (");
+				pCreate.Append("\"nOrmFieldsRoundtripId\" INTEGER PRIMARY KEY,");
+				pCreate.Append("\"nSmallCol\" SMALLINT NOT NULL,");
+				pCreate.Append("\"nAuxInt\" INTEGER NOT NULL,");
+				pCreate.Append("\"bFlag\" BOOLEAN NOT NULL,");
+				pCreate.Append("\"tsCreated\" TIMESTAMPTZ NOT NULL,");
+				pCreate.Append("\"fScore\" REAL NOT NULL,");
+				pCreate.Append("\"fWeight\" DOUBLE PRECISION NOT NULL,");
+				pCreate.Append("\"sTitle\" TEXT NOT NULL,");
+				pCreate.Append("\"uCorrelation\" UUID NOT NULL,");
+				pCreate.Append("\"binPayload\" BYTEA NOT NULL");
+				pCreate.Append(");");
+				TestUtils::ExecuteSql(pCreate.GetExternalString(), pDb);
+
+				gsBlob* pPayload = own new gsBlob();
+				pPayload.PackUint8(190);
+				pPayload.PackUint8(239);
+				pPayload.SetOffset(0);
+
+				InternalString* pInsertSql = own new InternalString("");
+				pInsertSql.Append("INSERT INTO \"PGT_tblOrmFieldsRoundtrip\" (");
+				pInsertSql.Append("\"nOrmFieldsRoundtripId\",\"nSmallCol\",\"nAuxInt\",\"bFlag\",\"tsCreated\",");
+				pInsertSql.Append("\"fScore\",\"fWeight\",\"sTitle\",\"uCorrelation\",\"binPayload\"");
+				pInsertSql.Append(") VALUES ($id,$small,$aux,$flag,$ts::timestamptz,$score,$weight,$title,$uuid::uuid,$blob)");
+
+				DatabaseQuery* pIns = own new DatabaseQuery();
+				pIns.SetSql(pInsertSql.GetExternalString());
+				Int32 nIdIns;
+				nIdIns = 9001;
+				Int16 nSmallIns;
+				nSmallIns = -42;
+				Int32 nAuxIns;
+				nAuxIns = 1001;
+				double fScoreIns;
+				fScoreIns = 2.25;
+				double fWeightIns;
+				fWeightIns = 3.141592653589793;
+				pIns.SetParameterInt32("id", nIdIns);
+				pIns.SetParameterInt16("small", nSmallIns);
+				pIns.SetParameterInt32("aux", nAuxIns);
+				pIns.SetParameter("flag", true);
+				pIns.SetParameter("ts", "2006-05-04 12:34:56+00");
+				pIns.SetParameterDouble("score", fScoreIns);
+				pIns.SetParameterDouble("weight", fWeightIns);
+				pIns.SetParameter("title", "hello orm");
+				pIns.SetParameter("uuid", "11111111-2222-3333-4444-555555555555");
+				pIns.SetParameter("blob", pPayload);
+				Assert::Plz(pIns.Execute(pDb));
+
+				InternalString* pSelectSql = own new InternalString("");
+				pSelectSql.Append("SELECT \"nOrmFieldsRoundtripId\",\"nSmallCol\",\"nAuxInt\",\"bFlag\",");
+				pSelectSql.Append("CAST(\"tsCreated\" AS TEXT) AS \"sxCreated\",");
+				pSelectSql.Append("\"fScore\",\"fWeight\",\"sTitle\",");
+				pSelectSql.Append("CAST(\"uCorrelation\" AS TEXT) AS \"sxUuid\",");
+				pSelectSql.Append("\"binPayload\" FROM \"PGT_tblOrmFieldsRoundtrip\" ");
+				pSelectSql.Append("WHERE \"nOrmFieldsRoundtripId\" = $id");
+
+				DatabaseQuery* pSel = own new DatabaseQuery();
+				pSel.SetSql(pSelectSql.GetExternalString());
+				Int32 nIdSel;
+				nIdSel = 9001;
+				pSel.SetParameterInt32("id", nIdSel);
+				Assert::Plz(pSel.Execute(pDb));
+				Assert::Plz(pSel.GetRowCount() == 1);
+
+				Int32 nId = 0;
+				Assert::Plz(pSel.GetInt32(0, 0, ref nId));
+				Assert::Plz(nId == 9001);
+
+				Int16 nSmall = 0;
+				Assert::Plz(pSel.GetInt16(0, 1, ref nSmall));
+				Assert::Plz(nSmall == -42);
+
+				Int32 nAux = 0;
+				Assert::Plz(pSel.GetInt32(0, 2, ref nAux));
+				Assert::Plz(nAux == 1001);
+
+				bool bFlag = false;
+				Assert::Plz(pSel.GetBool(0, 3, ref bFlag));
+				Assert::Plz(bFlag);
+
+				InternalString* pTs = own new InternalString("");
+				Assert::Plz(pSel.GetString(0, 4, pTs));
+				Assert::Plz(pTs.IndexOf("2006-05-04") >= 0);
+
+				float fScore = 0;
+				Assert::Plz(pSel.GetFloat(0, 5, ref fScore));
+				Assert::Plz(__FloatNear(fScore, 2.25f));
+
+				double fWeight = 0;
+				Assert::Plz(pSel.GetDouble(0, 6, ref fWeight));
+				Assert::Plz(__DoubleNear(fWeight, 3.141592653589793));
+
+				InternalString* pTitle = own new InternalString("");
+				Assert::Plz(pSel.GetString(0, 7, pTitle));
+				Assert::Plz(pTitle.IsEqual("hello orm"));
+
+				InternalString* pUuid = own new InternalString("");
+				Assert::Plz(pSel.GetString(0, 8, pUuid));
+				Assert::Plz(pUuid.IsEqual("11111111-2222-3333-4444-555555555555"));
+
+				gsBlob* pRead = own new gsBlob();
+				Assert::Plz(pSel.GetBlob(0, 9, pRead));
+				Assert::Plz(pRead.GetSize() == 2);
+				pRead.SetOffset(0);
+				Uint8 b0 = 0;
+				Uint8 b1 = 0;
+				Assert::Plz(pRead.UnpackUint8(ref b0));
+				Assert::Plz(pRead.UnpackUint8(ref b1));
+				Assert::Plz(b0 == 190);
+				Assert::Plz(b1 == 239);
+
+				TestUtils::ExecuteSql("DROP TABLE IF EXISTS \"PGT_tblOrmFieldsRoundtrip\" CASCADE;", pDb);
+			}
+		}
+	}
+}

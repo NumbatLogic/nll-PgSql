@@ -1,166 +1,275 @@
 namespace NumbatLogic
 {
-	class DatabaseQueryParameter
+	namespace Database
 	{
-		public InternalString* __sName;
-		public DatabaseValue* __pValue;
-
-		public construct(string sxName, Uint32 nValue)
+		class DatabaseQueryParameter
 		{
-			__sName = own new InternalString(sxName);
-			__pValue = own new DatabaseValue(nValue);
-		}
+			public InternalString* __sName;
+			public DatabaseValue* __pValue;
 
-		public construct(string sxName, string sxValue)
-		{
-			__sName = own new InternalString(sxName);
-			__pValue = own new DatabaseValue(sxValue);
-		}
-	}
+			public construct(string sxName, Int32 nValue)
+			{
+				__sName = own new InternalString(sxName);
+				__pValue = own new DatabaseValue(nValue);
+			}
 
-	class DatabaseQuery
-	{
-		private InternalString* m_sSql;
-		private OwnedVector<DatabaseQueryParameter>* m_pParameterVector;
-		private PgSqlResult* m_pResult;
+			public construct(string sxName, Uint32 nValue)
+			{
+				__sName = own new InternalString(sxName);
+				__pValue = own new DatabaseValue(nValue);
+			}
 
-		public construct()
-		{
-			m_pParameterVector = own new OwnedVector<DatabaseQueryParameter>();
-			m_pResult = null;
-		}
+			public construct(string sxName, string sxValue)
+			{
+				__sName = own new InternalString(sxName);
+				__pValue = own new DatabaseValue(sxValue);
+			}
 
-		public void SetSql(string sxSql)
-		{
-			Assert::Plz(m_sSql == null);
-			m_sSql = own new InternalString(sxSql);
-		}
+			public construct(string sxName, gsBlob pValue)
+			{
+				__sName = own new InternalString(sxName);
+				__pValue = own new DatabaseValue(pValue);
+			}
 
-		public void SetSql(InternalString sSql)
-		{
-			SetSql(sSql.GetExternalString());
-		}
+			public construct(string sxName, bool bValue)
+			{
+				__sName = own new InternalString(sxName);
+				__pValue = own new DatabaseValue(bValue);
+			}
 
-		public void SetParameter(string sxName, Uint32 nValue)
-		{
-			DatabaseQueryParameter* pParameter = own new DatabaseQueryParameter(sxName, nValue);
-			m_pParameterVector.PushBack(disown pParameter);
-		}
+			public construct(string sxName, Int16 nValue)
+			{
+				__sName = own new InternalString(sxName);
+				__pValue = own new DatabaseValue(nValue);
+			}
 
-		public void SetParameter(string sxName, string sxValue)
-		{
-			DatabaseQueryParameter* pParameter = own new DatabaseQueryParameter(sxName, sxValue);
-			m_pParameterVector.PushBack(disown pParameter);
+			public construct(string sxName, double fValue)
+			{
+				__sName = own new InternalString(sxName);
+				__pValue = own new DatabaseValue(fValue);
+			}
 		}
 
-		public string GetSql()
+		class DatabaseQuery
 		{
-			if (m_sSql == null)
-				return "";
-			return m_sSql.GetExternalString();
-		}
+			private InternalString* m_sSql;
+			private OwnedVector<DatabaseQueryParameter>* m_pParameterVector;
+			private PgSqlResult* m_pResult;
 
-		public int GetParameterCount()
-		{
-			return m_pParameterVector.GetSize();
-		}
+			public construct()
+			{
+				m_pParameterVector = own new OwnedVector<DatabaseQueryParameter>();
+				m_pResult = null;
+			}
 
-		public string GetParameterName(int nIndex)
-		{
-			return m_pParameterVector.Get(nIndex).__sName.GetExternalString();
-		}
+			public void SetSql(string sxSql)
+			{
+				Assert::Plz(m_sSql == null);
+				m_sSql = own new InternalString(sxSql);
+			}
 
-		public string GetParameterString(int nIndex)
-		{
-			return m_pParameterVector.Get(nIndex).__pValue.GetAsString();
-		}
+			public void SetSql(InternalString sSql)
+			{
+				SetSql(sSql.GetExternalString());
+			}
 
-		public bool Execute(DatabaseConnection pConn)
-		{
-			return pConn.ExecuteQuery(this);
-		}
+			public void SetParameterInt32(string sxName, Int32 nValue)
+			{
+				DatabaseQueryParameter* pParameter = own new DatabaseQueryParameter(sxName, nValue);
+				m_pParameterVector.PushBack(disown pParameter);
+			}
 
-		public void SetResult(PgSqlResult** pResult)
-		{
-			if (m_pResult != null)
-				delete m_pResult;
-			m_pResult = own pResult;
-		}
+			public void SetParameterUint32(string sxName, Uint32 nValue)
+			{
+				DatabaseQueryParameter* pParameter = own new DatabaseQueryParameter(sxName, nValue);
+				m_pParameterVector.PushBack(disown pParameter);
+			}
 
-		public int GetRowCount()
-		{
-			if (m_pResult == null)
-				return 0;
-			return m_pResult.GetRowCount();
-		}
+			public void SetParameter(string sxName, string sxValue)
+			{
+				DatabaseQueryParameter* pParameter = own new DatabaseQueryParameter(sxName, sxValue);
+				m_pParameterVector.PushBack(disown pParameter);
+			}
 
-		public int GetColumnCount()
-		{
-			if (m_pResult == null)
-				return 0;
-			return m_pResult.GetColumnCount();
-		}
+			public void SetParameter(string sxName, gsBlob pValue)
+			{
+				DatabaseQueryParameter* pParameter = own new DatabaseQueryParameter(sxName, pValue);
+				m_pParameterVector.PushBack(disown pParameter);
+			}
 
-		public bool GetString(int nRow, int nCol, InternalString pOut)
-		{
-			if (m_pResult == null)
-				return false;
-			return m_pResult.GetString(nRow, nCol, pOut);
-		}
+			public void SetParameter(string sxName, bool bValue)
+			{
+				DatabaseQueryParameter* pParameter = own new DatabaseQueryParameter(sxName, bValue);
+				m_pParameterVector.PushBack(disown pParameter);
+			}
 
-		public bool GetBool(int nRow, int nCol, ref bool pOut)
-		{
-			if (m_pResult == null)
-				return false;
-			return m_pResult.GetBool(nRow, nCol, ref pOut);
-		}
-		public bool GetInt8(int nRow, int nCol, ref Int8 pOut)
-		{
-			if (m_pResult == null)
-				return false;
-			return m_pResult.GetInt8(nRow, nCol, ref pOut);
-		}
-		public bool GetInt16(int nRow, int nCol, ref Int16 pOut)
-		{
-			if (m_pResult == null)
-				return false;
-			return m_pResult.GetInt16(nRow, nCol, ref pOut);
-		}
-		public bool GetInt32(int nRow, int nCol, ref Int32 pOut)
-		{
-			if (m_pResult == null)
-				return false;
-			return m_pResult.GetInt32(nRow, nCol, ref pOut);
-		}
-		public bool GetUint8(int nRow, int nCol, ref Uint8 pOut)
-		{
-			if (m_pResult == null)
-				return false;
-			return m_pResult.GetUint8(nRow, nCol, ref pOut);
-		}
-		public bool GetUint16(int nRow, int nCol, ref Uint16 pOut)
-		{
-			if (m_pResult == null)
-				return false;
-			return m_pResult.GetUint16(nRow, nCol, ref pOut);
-		}
-		public bool GetUint32(int nRow, int nCol, ref Uint32 pOut)
-		{
-			if (m_pResult == null)
-				return false;
-			return m_pResult.GetUint32(nRow, nCol, ref pOut);
-		}
-		public bool GetFloat(int nRow, int nCol, ref float pOut)
-		{
-			if (m_pResult == null)
-				return false;
-			return m_pResult.GetFloat(nRow, nCol, ref pOut);
-		}
-		public bool GetDouble(int nRow, int nCol, ref double pOut)
-		{
-			if (m_pResult == null)
-				return false;
-			return m_pResult.GetDouble(nRow, nCol, ref pOut);
+			public void SetParameterInt16(string sxName, Int16 nValue)
+			{
+				DatabaseQueryParameter* pParameter = own new DatabaseQueryParameter(sxName, nValue);
+				m_pParameterVector.PushBack(disown pParameter);
+			}
+
+			public void SetParameterDouble(string sxName, double fValue)
+			{
+				DatabaseQueryParameter* pParameter = own new DatabaseQueryParameter(sxName, fValue);
+				m_pParameterVector.PushBack(disown pParameter);
+			}
+
+			public string GetSql()
+			{
+				if (m_sSql == null)
+					return "";
+				return m_sSql.GetExternalString();
+			}
+
+			public int GetParameterCount()
+			{
+				return m_pParameterVector.GetSize();
+			}
+
+			public string GetParameterName(int nIndex)
+			{
+				return m_pParameterVector.Get(nIndex).__sName.GetExternalString();
+			}
+
+			public string GetParameterString(int nIndex)
+			{
+				return m_pParameterVector.Get(nIndex).__pValue.GetAsString();
+			}
+
+			public DatabaseValue::Type GetParameterType(int nIndex)
+			{
+				return m_pParameterVector.Get(nIndex).__pValue.__eType;
+			}
+
+			public gsBlob GetParameterBlob(int nIndex)
+			{
+				return m_pParameterVector.Get(nIndex).__pValue.GetBlob();
+			}
+
+			public Uint32 GetParameterUint32(int nIndex)
+			{
+				return m_pParameterVector.Get(nIndex).__pValue.GetUint32();
+			}
+
+			public Int32 GetParameterInt32(int nIndex)
+			{
+				return m_pParameterVector.Get(nIndex).__pValue.GetInt32();
+			}
+
+			public Int16 GetParameterInt16(int nIndex)
+			{
+				return m_pParameterVector.Get(nIndex).__pValue.GetInt16();
+			}
+
+			public bool GetParameterBool(int nIndex)
+			{
+				return m_pParameterVector.Get(nIndex).__pValue.GetBool();
+			}
+
+			public double GetParameterDouble(int nIndex)
+			{
+				return m_pParameterVector.Get(nIndex).__pValue.GetDouble();
+			}
+
+			public string GetParameterTextExternal(int nIndex)
+			{
+				return m_pParameterVector.Get(nIndex).__pValue.GetTextExternal();
+			}
+
+			public bool Execute(DatabaseConnection pConn)
+			{
+				return pConn.ExecuteQuery(this);
+			}
+
+			public void SetResult(PgSqlResult** pResult)
+			{
+				if (m_pResult != null)
+					delete m_pResult;
+				m_pResult = own pResult;
+			}
+
+			public int GetRowCount()
+			{
+				if (m_pResult == null)
+					return 0;
+				return m_pResult.GetRowCount();
+			}
+
+			public int GetColumnCount()
+			{
+				if (m_pResult == null)
+					return 0;
+				return m_pResult.GetColumnCount();
+			}
+
+			public bool GetString(int nRow, int nCol, InternalString pOut)
+			{
+				if (m_pResult == null)
+					return false;
+				return m_pResult.GetString(nRow, nCol, pOut);
+			}
+
+			public bool GetBool(int nRow, int nCol, ref bool pOut)
+			{
+				if (m_pResult == null)
+					return false;
+				return m_pResult.GetBool(nRow, nCol, ref pOut);
+			}
+			public bool GetInt8(int nRow, int nCol, ref Int8 pOut)
+			{
+				if (m_pResult == null)
+					return false;
+				return m_pResult.GetInt8(nRow, nCol, ref pOut);
+			}
+			public bool GetInt16(int nRow, int nCol, ref Int16 pOut)
+			{
+				if (m_pResult == null)
+					return false;
+				return m_pResult.GetInt16(nRow, nCol, ref pOut);
+			}
+			public bool GetInt32(int nRow, int nCol, ref Int32 pOut)
+			{
+				if (m_pResult == null)
+					return false;
+				return m_pResult.GetInt32(nRow, nCol, ref pOut);
+			}
+			public bool GetUint8(int nRow, int nCol, ref Uint8 pOut)
+			{
+				if (m_pResult == null)
+					return false;
+				return m_pResult.GetUint8(nRow, nCol, ref pOut);
+			}
+			public bool GetUint16(int nRow, int nCol, ref Uint16 pOut)
+			{
+				if (m_pResult == null)
+					return false;
+				return m_pResult.GetUint16(nRow, nCol, ref pOut);
+			}
+			public bool GetUint32(int nRow, int nCol, ref Uint32 pOut)
+			{
+				if (m_pResult == null)
+					return false;
+				return m_pResult.GetUint32(nRow, nCol, ref pOut);
+			}
+			public bool GetFloat(int nRow, int nCol, ref float pOut)
+			{
+				if (m_pResult == null)
+					return false;
+				return m_pResult.GetFloat(nRow, nCol, ref pOut);
+			}
+			public bool GetDouble(int nRow, int nCol, ref double pOut)
+			{
+				if (m_pResult == null)
+					return false;
+				return m_pResult.GetDouble(nRow, nCol, ref pOut);
+			}
+			public bool GetBlob(int nRow, int nCol, gsBlob pOut)
+			{
+				if (m_pResult == null)
+					return false;
+				return m_pResult.GetBlob(nRow, nCol, pOut);
+			}
 		}
 	}
 }

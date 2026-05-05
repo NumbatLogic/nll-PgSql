@@ -1,8 +1,8 @@
 using System;
-using System.Collections.Generic;
 using Npgsql;
+using NpgsqlTypes;
 
-namespace NumbatLogic
+namespace NumbatLogic.Database
 {
 	public class PgSqlBackend
 	{
@@ -114,6 +114,11 @@ namespace NumbatLogic
 			return m_sLastError ?? string.Empty;
 		}
 
+		public string GetParameterPrefix()
+		{
+			return "@p";
+		}
+
 		public InternalString QueryFirstRowSingleColumn(string sxSql)
 		{
 			if (m_pConn == null || sxSql == null)
@@ -143,57 +148,9 @@ namespace NumbatLogic
 			}
 		}
 
-		private static List<string> SplitParamString(string sxParamString, int nParams)
+		public PgSqlResult ExecuteQuery(string sxSql, DatabaseQuery pQuery)
 		{
-			var result = new List<string>(nParams > 0 ? nParams : 0);
-			if (sxParamString == null || nParams <= 0)
-				return result;
-
-			int start = 0;
-			for (int i = 0; i < nParams; i++)
-			{
-				if (start >= sxParamString.Length)
-				{
-					result.Add(string.Empty);
-					continue;
-				}
-
-				int idx = sxParamString.IndexOf('\x01', start);
-				if (idx < 0)
-				{
-					result.Add(sxParamString.Substring(start));
-					start = sxParamString.Length;
-				}
-				else
-				{
-					result.Add(sxParamString.Substring(start, idx - start));
-					start = idx + 1;
-				}
-			}
-
-			return result;
-		}
-
-		private static string RewriteSqlForNpgsql(string sxSql, int nParams)
-		{
-			// Original SQL uses $1, $2 ... style. Npgsql by default expects @p1, @p2 ...
-			// To avoid touching the NLL-side replacement logic, just adapt it here.
-			if (sxSql == null || nParams <= 0)
-				return sxSql;
-
-			string sqlOut = sxSql;
-			for (int i = 1; i <= nParams; i++)
-			{
-				string from = "$" + i.ToString();
-				string to = "@p" + i.ToString();
-				sqlOut = sqlOut.Replace(from, to);
-			}
-			return sqlOut;
-		}
-
-		public PgSqlResult ExecuteQuery(string sxSql, int nParams, string sxParamString)
-		{
-			if (m_pConn == null || sxSql == null)
+			if (m_pConn == null || sxSql == null || pQuery == null)
 			{
 				ClearLastError();
 				return null;
@@ -201,15 +158,55 @@ namespace NumbatLogic
 
 			try
 			{
-				List<string> paramValues = SplitParamString(sxParamString, nParams);
-				string finalSql = RewriteSqlForNpgsql(sxSql, nParams);
+				int nParameterCount = pQuery.GetParameterCount();
 
-				using (var cmd = new NpgsqlCommand(finalSql, m_pConn))
+				using (var cmd = new NpgsqlCommand(sxSql, m_pConn))
 				{
-					for (int i = 0; i < paramValues.Count; i++)
+					for (int i = 0; i < nParameterCount; i++)
 					{
 						string paramName = "p" + (i + 1).ToString();
-						cmd.Parameters.AddWithValue(paramName, (object)paramValues[i] ?? DBNull.Value);
+						switch (pQuery.GetParameterType(i))
+						{
+							case DatabaseValue.Type.UINT32:
+								cmd.Parameters.AddWithValue(paramName, pQuery.GetParameterUint32(i));
+								break;
+							case DatabaseValue.Type.INT32:
+								cmd.Parameters.AddWithValue(paramName, pQuery.GetParameterInt32(i));
+								break;
+							case DatabaseValue.Type.INT16:
+								cmd.Parameters.AddWithValue(paramName, pQuery.GetParameterInt16(i));
+								break;
+							case DatabaseValue.Type.BOOL:
+								cmd.Parameters.AddWithValue(paramName, pQuery.GetParameterBool(i));
+								break;
+							case DatabaseValue.Type.DOUBLE:
+								cmd.Parameters.AddWithValue(paramName, pQuery.GetParameterDouble(i));
+								break;
+							case DatabaseValue.Type.BLOB:
+							{
+								gsBlob pBlob = pQuery.GetParameterBlob(i);
+								byte[] blob = pBlob == null || pBlob.__nSize <= 0
+									? Array.Empty<byte>()
+									: new byte[pBlob.__nSize];
+								if (pBlob != null && pBlob.__nSize > 0)
+									Buffer.BlockCopy(pBlob.__pBuffer, 0, blob, 0, pBlob.__nSize);
+								var dbParam = cmd.Parameters.Add(paramName, NpgsqlDbType.Bytea);
+								dbParam.Value = blob;
+								break;
+							}
+							case DatabaseValue.Type.STRING:
+							{
+								string sxText = pQuery.GetParameterTextExternal(i) ?? string.Empty;
+								cmd.Parameters.AddWithValue(paramName, sxText);
+								break;
+							}
+							default:
+							{
+								string sxFallback = pQuery.GetParameterString(i) ?? string.Empty;
+								cmd.Parameters.AddWithValue(paramName, (object)sxFallback);
+								break;
+							}
+						}
 					}
 
 					using (var reader = cmd.ExecuteReader())

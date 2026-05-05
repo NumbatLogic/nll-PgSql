@@ -1,0 +1,31 @@
+namespace NumbatLogic
+{
+	namespace Database
+	{
+		class PgSqlTest
+		{
+			public static void @EntryPoint() Run(Vector<string> sArgVector)
+			{
+				Console::Log("PgSqlTest");
+
+				/*<?
+					include_once "../../../LangShared/Source/Test/TestMetaprogramming.php";
+					Test_SetFolder("Test");
+					Test_Output();
+				?>*/
+					if (sArgVector.GetSize() == 0 || ExternalString::Equal(sArgVector.Get(0), "DatabaseQuery_GetSql"))
+					{
+						Console::Log("DatabaseQuery_GetSql");
+						DatabaseQuery_GetSql::Run();
+					}
+					if (sArgVector.GetSize() == 0 || ExternalString::Equal(sArgVector.Get(0), "OrmFields_Roundtrip"))
+					{
+						Console::Log("OrmFields_Roundtrip");
+						OrmFields_Roundtrip::Run();
+					}
+				
+				/*<??>*/
+			}
+		}
+	}
+}

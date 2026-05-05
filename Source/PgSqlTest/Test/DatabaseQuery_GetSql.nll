@@ -1,0 +1,16 @@
+namespace NumbatLogic
+{
+	namespace Database
+	{
+		class DatabaseQuery_GetSql
+		{
+			public static void Run()
+			{
+				DatabaseQuery* pQuery = own new DatabaseQuery();
+				pQuery.SetSql("SELECT 1");
+				Assert::Plz(ExternalString::Equal(pQuery.GetSql(), "SELECT 1"));
+				Assert::Plz(pQuery.GetParameterCount() == 0);
+			}
+		}
+	}
+}

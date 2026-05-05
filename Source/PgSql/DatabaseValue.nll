@@ -1,37 +1,127 @@
 namespace NumbatLogic
 {
-	class DatabaseValue
+	namespace Database
 	{
-		public enum Type {
-			UINT32,
-			STRING
-		}
-
-		public Type __eType;
-		public Uint32 __nUint32;
-		private InternalString* __sString;
-		
-		public construct(Uint32 nUint32)
+		class DatabaseValue
 		{
-			__eType = Type::UINT32;
-			__nUint32 = nUint32;
-		}
-
-		public construct(string sxString)
-		{
-			__eType = Type::STRING;
-			__sString = own new InternalString(sxString);
-		}
-
-		public string GetAsString()
-		{
-			if (__eType == Type::UINT32)
-			{
-				InternalString* p = own new InternalString("");
-				p.AppendUint32(__nUint32);
-				return p.GetExternalString();
+			public enum Type {
+				UINT32,
+				STRING,
+				BLOB,
+				INT16,
+				INT32,
+				BOOL,
+				DOUBLE,
 			}
-			return __sString.GetExternalString();
+
+			public Type __eType;
+			public Uint32 __nUint32;
+			public Int32 __nInt32;
+			public Int16 __nInt16;
+			public bool __bBool;
+			public double __fDouble;
+			public InternalString* __sString;
+			public gsBlob* __pBlob;
+
+			public construct(Uint32 nUint32)
+			{
+				__eType = Type::UINT32;
+				__nUint32 = nUint32;
+			}
+
+			public construct(Int32 nValue)
+			{
+				__eType = Type::INT32;
+				__nInt32 = nValue;
+			}
+
+			public construct(string sxString)
+			{
+				__eType = Type::STRING;
+				__sString = own new InternalString(sxString);
+			}
+
+			public construct(gsBlob pBlob)
+			{
+				__eType = Type::BLOB;
+				if (pBlob == null)
+					__pBlob = null;
+				else
+					__pBlob = own pBlob.Clone();
+			}
+
+			public construct(bool bValue)
+			{
+				__eType = Type::BOOL;
+				__bBool = bValue;
+			}
+
+			public construct(Int16 nValue)
+			{
+				__eType = Type::INT16;
+				__nInt16 = nValue;
+			}
+
+			public construct(double fValue)
+			{
+				__eType = Type::DOUBLE;
+				__fDouble = fValue;
+			}
+
+			public string GetAsString()
+			{
+				if (__eType != Type::STRING)
+					return "";
+				if (__sString == null)
+					return "";
+				return __sString.GetExternalString();
+			}
+
+			public gsBlob GetBlob()
+			{
+				Assert::Plz(__eType == Type::BLOB);
+				return __pBlob;
+			}
+
+			public Uint32 GetUint32()
+			{
+				Assert::Plz(__eType == Type::UINT32);
+				return __nUint32;
+			}
+
+			public Int32 GetInt32()
+			{
+				Assert::Plz(__eType == Type::INT32);
+				return __nInt32;
+			}
+
+			public Int16 GetInt16()
+			{
+				Assert::Plz(__eType == Type::INT16);
+				return __nInt16;
+			}
+
+			public bool GetBool()
+			{
+				Assert::Plz(__eType == Type::BOOL);
+				return __bBool;
+			}
+
+			public double GetDouble()
+			{
+				Assert::Plz(__eType == Type::DOUBLE);
+				return __fDouble;
+			}
+
+			public string GetTextExternal()
+			{
+				Assert::Plz(__eType == Type::STRING);
+				if (__sString == null)
+					return "";
+				return __sString.GetExternalString();
+			}
 		}
 	}
 }
+
+

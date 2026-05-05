@@ -1,167 +1,271 @@
 #include "PgSqlResult.hpp"
 #include "../../../../LangShared/Source/InternalString/CPP/InternalString.hpp"
-#include <cstdlib>
+#include "../../../../LangShared/Source/Blob/CPP/Blob.hpp"
+#include <arpa/inet.h>
+#include <cstdint>
 #include <cstring>
+#include <limits>
 
 namespace NumbatLogic
 {
-	static const char* GetCell(PGresult* pResult, int nRow, int nCol)
+	namespace Database
 	{
-		if (!pResult || nRow < 0 || nCol < 0 ||
-			nRow >= PQntuples(pResult) || nCol >= PQnfields(pResult))
-			return nullptr;
-		const char* v = PQgetvalue(pResult, nRow, nCol);
-		return v ? v : "";
-	}
-	PgSqlResult::PgSqlResult(PGresult* pResult)
-		: m_pResult(pResult)
-	{
-	}
+		static const Oid BOOLOID = 16;
+		static const Oid INT2OID = 21;
+		static const Oid INT4OID = 23;
+		static const Oid INT8OID = 20;
+		static const Oid FLOAT4OID = 700;
+		static const Oid FLOAT8OID = 701;
 
-	PgSqlResult::~PgSqlResult()
-	{
-		if (m_pResult)
+		static uint64_t NetworkToHost64(uint64_t nValue)
 		{
-			PQclear(m_pResult);
-			m_pResult = nullptr;
+			#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+				return ((nValue & 0x00000000000000FFULL) << 56) |
+					((nValue & 0x000000000000FF00ULL) << 40) |
+					((nValue & 0x0000000000FF0000ULL) << 24) |
+					((nValue & 0x00000000FF000000ULL) << 8) |
+					((nValue & 0x000000FF00000000ULL) >> 8) |
+					((nValue & 0x0000FF0000000000ULL) >> 24) |
+					((nValue & 0x00FF000000000000ULL) >> 40) |
+					((nValue & 0xFF00000000000000ULL) >> 56);
+			#else
+				return nValue;
+			#endif
 		}
-	}
 
-	int PgSqlResult::GetRowCount()
-	{
-		return m_pResult ? PQntuples(m_pResult) : 0;
-	}
+		static bool IsValidCell(PGresult* pResult, int nRow, int nCol)
+		{
+			return pResult && nRow >= 0 && nCol >= 0 &&
+				nRow < PQntuples(pResult) && nCol < PQnfields(pResult);
+		}
 
-	int PgSqlResult::GetColumnCount()
-	{
-		return m_pResult ? PQnfields(m_pResult) : 0;
-	}
+		static bool GetCellData(PGresult* pResult, int nRow, int nCol, const unsigned char*& pData, int& nLen)
+		{
+			pData = nullptr;
+			nLen = 0;
+			if (!IsValidCell(pResult, nRow, nCol) || PQgetisnull(pResult, nRow, nCol))
+				return false;
+			pData = reinterpret_cast<const unsigned char*>(PQgetvalue(pResult, nRow, nCol));
+			nLen = PQgetlength(pResult, nRow, nCol);
+			return pData != nullptr && nLen >= 0;
+		}
 
-	bool PgSqlResult::GetString(int nRow, int nCol, InternalString* pOut)
-	{
-		const char* v = GetCell(m_pResult, nRow, nCol);
-		if (!pOut || !v)
+		static bool TryGetBinaryInt64(PGresult* pResult, int nRow, int nCol, int64_t& outVal)
+		{
+			const unsigned char* pData = nullptr;
+			int nLen = 0;
+			if (!GetCellData(pResult, nRow, nCol, pData, nLen) || PQfformat(pResult, nCol) != 1)
+				return false;
+
+			Oid nType = PQftype(pResult, nCol);
+			if (nType == INT2OID && nLen == 2)
+			{
+				uint16_t v;
+				memcpy(&v, pData, sizeof(v));
+				outVal = static_cast<int16_t>(ntohs(v));
+				return true;
+			}
+			if (nType == INT4OID && nLen == 4)
+			{
+				uint32_t v;
+				memcpy(&v, pData, sizeof(v));
+				outVal = static_cast<int32_t>(ntohl(v));
+				return true;
+			}
+			if (nType == INT8OID && nLen == 8)
+			{
+				uint64_t v;
+				memcpy(&v, pData, sizeof(v));
+				outVal = static_cast<int64_t>(NetworkToHost64(v));
+				return true;
+			}
 			return false;
-		pOut->Set(v);
+		}
+
+		static bool TryGetBinaryDouble(PGresult* pResult, int nRow, int nCol, double& outVal)
+		{
+			const unsigned char* pData = nullptr;
+			int nLen = 0;
+			if (!GetCellData(pResult, nRow, nCol, pData, nLen) || PQfformat(pResult, nCol) != 1)
+				return false;
+
+			Oid nType = PQftype(pResult, nCol);
+			if (nType == FLOAT4OID && nLen == 4)
+			{
+				uint32_t raw = 0;
+				memcpy(&raw, pData, sizeof(raw));
+				raw = ntohl(raw);
+				float f = 0.0f;
+				memcpy(&f, &raw, sizeof(f));
+				outVal = static_cast<double>(f);
+				return true;
+			}
+			if (nType == FLOAT8OID && nLen == 8)
+			{
+				uint64_t raw = 0;
+				memcpy(&raw, pData, sizeof(raw));
+				raw = NetworkToHost64(raw);
+				memcpy(&outVal, &raw, sizeof(outVal));
+				return true;
+			}
+			return false;
+		}
+
+		PgSqlResult::PgSqlResult(PGresult* pResult)
+			: m_pResult(pResult)
+		{
+		}
+
+		PgSqlResult::~PgSqlResult()
+		{
+			if (m_pResult)
+			{
+				PQclear(m_pResult);
+				m_pResult = nullptr;
+			}
+		}
+
+		int PgSqlResult::GetRowCount()
+		{
+			return m_pResult ? PQntuples(m_pResult) : 0;
+		}
+
+		int PgSqlResult::GetColumnCount()
+		{
+			return m_pResult ? PQnfields(m_pResult) : 0;
+		}
+
+		bool PgSqlResult::GetString(int nRow, int nCol, InternalString* pOut)
+		{
+			if (!pOut || !IsValidCell(m_pResult, nRow, nCol))
+				return false;
+
+		if (PQfformat(m_pResult, nCol) != 1)
+				return false;
+
+		const unsigned char* pData = nullptr;
+		int nLen = 0;
+		if (!GetCellData(m_pResult, nRow, nCol, pData, nLen))
+			return false;
+		pOut->Set("");
+		pOut->AppendStringData(const_cast<unsigned char*>(pData), nLen);
+			return true;
+		}
+
+		bool PgSqlResult::GetBool(int nRow, int nCol, bool& outVal)
+		{
+			const unsigned char* pData = nullptr;
+			int nLen = 0;
+		if (!GetCellData(m_pResult, nRow, nCol, pData, nLen) || PQfformat(m_pResult, nCol) != 1 ||
+			PQftype(m_pResult, nCol) != BOOLOID || nLen != 1)
+			return false;
+		outVal = (pData[0] != 0);
 		return true;
-	}
+		}
 
-	bool PgSqlResult::GetBool(int nRow, int nCol, bool& outVal)
-	{
-		const char* v = GetCell(m_pResult, nRow, nCol);
-		if (!v)
-			return false;
-		if (v[0] == 't' || v[0] == 'T' || (v[0] == '1' && v[1] == '\0'))
-		{ outVal = true; return true; }
-		if (v[0] == 'f' || v[0] == 'F' || v[0] == '0')
-		{ outVal = false; return true; }
-		if (strcmp(v, "true") == 0 || strcmp(v, "yes") == 0)
-		{ outVal = true; return true; }
-		if (strcmp(v, "false") == 0 || strcmp(v, "no") == 0)
-		{ outVal = false; return true; }
-		return false;
-	}
+		bool PgSqlResult::GetInt8(int nRow, int nCol, signed char& outVal)
+		{
+			int64_t nBinary = 0;
+			if (!TryGetBinaryInt64(m_pResult, nRow, nCol, nBinary))
+				return false;
+			if (nBinary < std::numeric_limits<signed char>::min() || nBinary > std::numeric_limits<signed char>::max())
+				return false;
+			outVal = static_cast<signed char>(nBinary);
+			return true;
+		}
 
-	bool PgSqlResult::GetInt8(int nRow, int nCol, signed char& outVal)
-	{
-		const char* v = GetCell(m_pResult, nRow, nCol);
-		if (!v || v[0] == '\0')
-			return false;
-		char* end = nullptr;
-		long n = strtol(v, &end, 10);
-		if (end == v || *end != '\0' || n < -128 || n > 127)
-			return false;
-		outVal = static_cast<signed char>(n);
-		return true;
-	}
+		bool PgSqlResult::GetInt16(int nRow, int nCol, short& outVal)
+		{
+			int64_t nBinary = 0;
+			if (!TryGetBinaryInt64(m_pResult, nRow, nCol, nBinary))
+				return false;
+			if (nBinary < std::numeric_limits<short>::min() || nBinary > std::numeric_limits<short>::max())
+				return false;
+			outVal = static_cast<short>(nBinary);
+			return true;
+		}
 
-	bool PgSqlResult::GetInt16(int nRow, int nCol, short& outVal)
-	{
-		const char* v = GetCell(m_pResult, nRow, nCol);
-		if (!v || v[0] == '\0')
-			return false;
-		char* end = nullptr;
-		long n = strtol(v, &end, 10);
-		if (end == v || *end != '\0' || n < -32768 || n > 32767)
-			return false;
-		outVal = static_cast<short>(n);
-		return true;
-	}
+		bool PgSqlResult::GetInt32(int nRow, int nCol, int& outVal)
+		{
+			int64_t nBinary = 0;
+			if (!TryGetBinaryInt64(m_pResult, nRow, nCol, nBinary))
+				return false;
+			if (nBinary < std::numeric_limits<int>::min() || nBinary > std::numeric_limits<int>::max())
+				return false;
+			outVal = static_cast<int>(nBinary);
+			return true;
+		}
 
-	bool PgSqlResult::GetInt32(int nRow, int nCol, int& outVal)
-	{
-		const char* v = GetCell(m_pResult, nRow, nCol);
-		if (!v || v[0] == '\0')
-			return false;
-		char* end = nullptr;
-		long n = strtol(v, &end, 10);
-		if (end == v || *end != '\0' || n < -2147483648L || n > 2147483647L)
-			return false;
-		outVal = static_cast<int>(n);
-		return true;
-	}
+		bool PgSqlResult::GetUint8(int nRow, int nCol, unsigned char& outVal)
+		{
+			int64_t nBinary = 0;
+			if (!TryGetBinaryInt64(m_pResult, nRow, nCol, nBinary))
+				return false;
+			if (nBinary < 0 || nBinary > std::numeric_limits<unsigned char>::max())
+				return false;
+			outVal = static_cast<unsigned char>(nBinary);
+			return true;
+		}
 
-	bool PgSqlResult::GetUint8(int nRow, int nCol, unsigned char& outVal)
-	{
-		const char* v = GetCell(m_pResult, nRow, nCol);
-		if (!v || v[0] == '\0')
-			return false;
-		char* end = nullptr;
-		unsigned long n = strtoul(v, &end, 10);
-		if (end == v || *end != '\0' || n > 255)
-			return false;
-		outVal = static_cast<unsigned char>(n);
-		return true;
-	}
+		bool PgSqlResult::GetUint16(int nRow, int nCol, unsigned short& outVal)
+		{
+			int64_t nBinary = 0;
+			if (!TryGetBinaryInt64(m_pResult, nRow, nCol, nBinary))
+				return false;
+			if (nBinary < 0 || nBinary > std::numeric_limits<unsigned short>::max())
+				return false;
+			outVal = static_cast<unsigned short>(nBinary);
+			return true;
+		}
 
-	bool PgSqlResult::GetUint16(int nRow, int nCol, unsigned short& outVal)
-	{
-		const char* v = GetCell(m_pResult, nRow, nCol);
-		if (!v || v[0] == '\0')
-			return false;
-		char* end = nullptr;
-		unsigned long n = strtoul(v, &end, 10);
-		if (end == v || *end != '\0' || n > 65535)
-			return false;
-		outVal = static_cast<unsigned short>(n);
-		return true;
-	}
+		bool PgSqlResult::GetUint32(int nRow, int nCol, unsigned int& outVal)
+		{
+			int64_t nBinary = 0;
+			if (!TryGetBinaryInt64(m_pResult, nRow, nCol, nBinary))
+				return false;
+			if (nBinary < 0 || static_cast<uint64_t>(nBinary) > std::numeric_limits<unsigned int>::max())
+				return false;
+			outVal = static_cast<unsigned int>(nBinary);
+			return true;
+		}
 
-	bool PgSqlResult::GetUint32(int nRow, int nCol, unsigned int& outVal)
-	{
-		const char* v = GetCell(m_pResult, nRow, nCol);
-		if (!v || v[0] == '\0')
-			return false;
-		char* end = nullptr;
-		unsigned long n = strtoul(v, &end, 10);
-		if (end == v || *end != '\0' || n > 4294967295UL)
-			return false;
-		outVal = static_cast<unsigned int>(n);
-		return true;
-	}
+		bool PgSqlResult::GetFloat(int nRow, int nCol, float& outVal)
+		{
+			double dBinary = 0.0;
+			if (!TryGetBinaryDouble(m_pResult, nRow, nCol, dBinary))
+				return false;
+			outVal = static_cast<float>(dBinary);
+			return true;
+		}
 
-	bool PgSqlResult::GetFloat(int nRow, int nCol, float& outVal)
-	{
-		const char* v = GetCell(m_pResult, nRow, nCol);
-		if (!v || v[0] == '\0')
-			return false;
-		char* end = nullptr;
-		double d = strtod(v, &end);
-		if (end == v)
-			return false;
-		outVal = static_cast<float>(d);
-		return true;
-	}
+		bool PgSqlResult::GetDouble(int nRow, int nCol, double& outVal)
+		{
+			return TryGetBinaryDouble(m_pResult, nRow, nCol, outVal);
+		}
 
-	bool PgSqlResult::GetDouble(int nRow, int nCol, double& outVal)
-	{
-		const char* v = GetCell(m_pResult, nRow, nCol);
-		if (!v || v[0] == '\0')
+		bool PgSqlResult::GetBlob(int nRow, int nCol, gsBlob* pOut)
+		{
+			if (!m_pResult || !pOut || nRow < 0 || nCol < 0 ||
+				nRow >= PQntuples(m_pResult) || nCol >= PQnfields(m_pResult))
+				return false;
+
+			if (PQgetisnull(m_pResult, nRow, nCol))
+				return false;
+
+			const char* pVal = PQgetvalue(m_pResult, nRow, nCol);
+			int nLen = PQgetlength(m_pResult, nRow, nCol);
+			if (!pVal || nLen < 0)
+				return false;
+
+			pOut->Reset();
+
+		if (PQfformat(m_pResult, nCol) != 1)
 			return false;
-		char* end = nullptr;
-		outVal = strtod(v, &end);
-		if (end == v)
-			return false;
-		return true;
+
+			for (int i = 0; i < nLen; i++)
+				pOut->PackUint8(static_cast<unsigned char>(pVal[i]));
+			pOut->SetOffset(0);
+			return true;
+		}
 	}
 }

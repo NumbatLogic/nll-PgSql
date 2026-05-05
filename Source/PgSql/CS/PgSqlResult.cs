@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Npgsql;
 
-namespace NumbatLogic
+namespace NumbatLogic.Database
 {
 	public class PgSqlResult
 	{
@@ -58,8 +58,9 @@ namespace NumbatLogic
 			if (!TryGetCell(nRow, nCol, out object value))
 				return false;
 
-			string text = value == null ? string.Empty : Convert.ToString(value);
-			pOut.Set(text ?? string.Empty);
+			if (!(value is string text))
+				return false;
+			pOut.Set(text);
 			return true;
 		}
 
@@ -67,88 +68,79 @@ namespace NumbatLogic
 		{
 			if (!TryGetCell(nRow, nCol, out object value))
 				return false;
-
-			if (value == null)
+			if (!(value is bool b))
 				return false;
+			pOut = b;
+			return true;
+		}
 
-			if (value is bool b)
+		private static bool TryGetSignedIntegral(object value, out long outVal)
+		{
+			outVal = 0;
+			if (value is sbyte sb) { outVal = sb; return true; }
+			if (value is short sh) { outVal = sh; return true; }
+			if (value is int i) { outVal = i; return true; }
+			if (value is long l) { outVal = l; return true; }
+			if (value is byte b) { outVal = b; return true; }
+			if (value is ushort us) { outVal = us; return true; }
+			if (value is uint ui) { outVal = ui; return true; }
+			if (value is ulong ul)
 			{
-				pOut = b;
-				return true;
-			}
-
-			string s = Convert.ToString(value);
-			if (string.IsNullOrEmpty(s))
-				return false;
-
-			if (s == "t" || s == "T" || s == "1")
-			{
-				pOut = true;
-				return true;
-			}
-			if (s == "f" || s == "F" || s == "0")
-			{
-				pOut = false;
-				return true;
-			}
-			if (string.Equals(s, "true", StringComparison.OrdinalIgnoreCase) ||
-				string.Equals(s, "yes", StringComparison.OrdinalIgnoreCase))
-			{
-				pOut = true;
-				return true;
-			}
-			if (string.Equals(s, "false", StringComparison.OrdinalIgnoreCase) ||
-				string.Equals(s, "no", StringComparison.OrdinalIgnoreCase))
-			{
-				pOut = false;
+				if (ul > (ulong)long.MaxValue)
+					return false;
+				outVal = (long)ul;
 				return true;
 			}
 			return false;
 		}
 
-		private static bool TryParseInt(string s, long min, long max, out long value)
+		private static bool TryGetUnsignedIntegral(object value, out ulong outVal)
 		{
-			value = 0;
-			if (string.IsNullOrEmpty(s))
-				return false;
-			if (!long.TryParse(s, out long v))
-				return false;
-			if (v < min || v > max)
-				return false;
-			value = v;
-			return true;
-		}
-
-		private static bool TryParseUInt(string s, ulong max, out ulong value)
-		{
-			value = 0;
-			if (string.IsNullOrEmpty(s))
-				return false;
-			if (!ulong.TryParse(s, out ulong v))
-				return false;
-			if (v > max)
-				return false;
-			value = v;
-			return true;
+			outVal = 0;
+			if (value is byte b) { outVal = b; return true; }
+			if (value is ushort us) { outVal = us; return true; }
+			if (value is uint ui) { outVal = ui; return true; }
+			if (value is ulong ul) { outVal = ul; return true; }
+			if (value is sbyte sb)
+			{
+				if (sb < 0)
+					return false;
+				outVal = (ulong)sb;
+				return true;
+			}
+			if (value is short sh)
+			{
+				if (sh < 0)
+					return false;
+				outVal = (ulong)sh;
+				return true;
+			}
+			if (value is int i)
+			{
+				if (i < 0)
+					return false;
+				outVal = (ulong)i;
+				return true;
+			}
+			if (value is long l)
+			{
+				if (l < 0)
+					return false;
+				outVal = (ulong)l;
+				return true;
+			}
+			return false;
 		}
 
 		public bool GetInt8(int nRow, int nCol, ref sbyte pOut)
 		{
 			if (!TryGetCell(nRow, nCol, out object value))
 				return false;
-			if (value == null)
+			if (!TryGetSignedIntegral(value, out long signedVal))
 				return false;
-
-			if (value is sbyte sb)
-			{
-				pOut = sb;
-				return true;
-			}
-
-			string s = Convert.ToString(value);
-			if (!TryParseInt(s, -128, 127, out long v))
+			if (signedVal < sbyte.MinValue || signedVal > sbyte.MaxValue)
 				return false;
-			pOut = (sbyte)v;
+			pOut = (sbyte)signedVal;
 			return true;
 		}
 
@@ -156,19 +148,11 @@ namespace NumbatLogic
 		{
 			if (!TryGetCell(nRow, nCol, out object value))
 				return false;
-			if (value == null)
+			if (!TryGetSignedIntegral(value, out long signedVal))
 				return false;
-
-			if (value is short sh)
-			{
-				pOut = sh;
-				return true;
-			}
-
-			string s = Convert.ToString(value);
-			if (!TryParseInt(s, -32768, 32767, out long v))
+			if (signedVal < short.MinValue || signedVal > short.MaxValue)
 				return false;
-			pOut = (short)v;
+			pOut = (short)signedVal;
 			return true;
 		}
 
@@ -176,19 +160,11 @@ namespace NumbatLogic
 		{
 			if (!TryGetCell(nRow, nCol, out object value))
 				return false;
-			if (value == null)
+			if (!TryGetSignedIntegral(value, out long signedVal))
 				return false;
-
-			if (value is int i)
-			{
-				pOut = i;
-				return true;
-			}
-
-			string s = Convert.ToString(value);
-			if (!TryParseInt(s, int.MinValue, int.MaxValue, out long v))
+			if (signedVal < int.MinValue || signedVal > int.MaxValue)
 				return false;
-			pOut = (int)v;
+			pOut = (int)signedVal;
 			return true;
 		}
 
@@ -196,19 +172,11 @@ namespace NumbatLogic
 		{
 			if (!TryGetCell(nRow, nCol, out object value))
 				return false;
-			if (value == null)
+			if (!TryGetUnsignedIntegral(value, out ulong unsignedVal))
 				return false;
-
-			if (value is byte b)
-			{
-				pOut = b;
-				return true;
-			}
-
-			string s = Convert.ToString(value);
-			if (!TryParseUInt(s, 255, out ulong v))
+			if (unsignedVal > byte.MaxValue)
 				return false;
-			pOut = (byte)v;
+			pOut = (byte)unsignedVal;
 			return true;
 		}
 
@@ -216,19 +184,11 @@ namespace NumbatLogic
 		{
 			if (!TryGetCell(nRow, nCol, out object value))
 				return false;
-			if (value == null)
+			if (!TryGetUnsignedIntegral(value, out ulong unsignedVal))
 				return false;
-
-			if (value is ushort us)
-			{
-				pOut = us;
-				return true;
-			}
-
-			string s = Convert.ToString(value);
-			if (!TryParseUInt(s, 65535, out ulong v))
+			if (unsignedVal > ushort.MaxValue)
 				return false;
-			pOut = (ushort)v;
+			pOut = (ushort)unsignedVal;
 			return true;
 		}
 
@@ -236,19 +196,11 @@ namespace NumbatLogic
 		{
 			if (!TryGetCell(nRow, nCol, out object value))
 				return false;
-			if (value == null)
+			if (!TryGetUnsignedIntegral(value, out ulong unsignedVal))
 				return false;
-
-			if (value is uint ui)
-			{
-				pOut = ui;
-				return true;
-			}
-
-			string s = Convert.ToString(value);
-			if (!TryParseUInt(s, 4294967295UL, out ulong v))
+			if (unsignedVal > uint.MaxValue)
 				return false;
-			pOut = (uint)v;
+			pOut = (uint)unsignedVal;
 			return true;
 		}
 
@@ -256,22 +208,9 @@ namespace NumbatLogic
 		{
 			if (!TryGetCell(nRow, nCol, out object value))
 				return false;
-			if (value == null)
+			if (!(value is float f))
 				return false;
-
-			if (value is float f)
-			{
-				pOut = f;
-				return true;
-			}
-
-			string s = Convert.ToString(value);
-			if (string.IsNullOrEmpty(s))
-				return false;
-
-			if (!double.TryParse(s, out double d))
-				return false;
-			pOut = (float)d;
+			pOut = f;
 			return true;
 		}
 
@@ -279,23 +218,28 @@ namespace NumbatLogic
 		{
 			if (!TryGetCell(nRow, nCol, out object value))
 				return false;
+			if (!(value is double d))
+				return false;
+			pOut = d;
+			return true;
+		}
+
+		public bool GetBlob(int nRow, int nCol, gsBlob pOut)
+		{
+			Assert.Plz(pOut != null);
+			if (!TryGetCell(nRow, nCol, out object value))
+				return false;
 			if (value == null)
 				return false;
-
-			if (value is double d)
+			if (value is byte[] bytes)
 			{
-				pOut = d;
+				pOut.Reset();
+				for (int i = 0; i < bytes.Length; i++)
+					pOut.PackUint8(bytes[i]);
+				pOut.SetOffset(0);
 				return true;
 			}
-
-			string s = Convert.ToString(value);
-			if (string.IsNullOrEmpty(s))
-				return false;
-
-			if (!double.TryParse(s, out double dv))
-				return false;
-			pOut = dv;
-			return true;
+			return false;
 		}
 	}
 }

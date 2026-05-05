@@ -1,0 +1,54 @@
+namespace NumbatLogic
+{
+	namespace Database
+	{
+		class DatabaseSettings
+		{
+			public InternalString* m_sHost;
+			public InternalString* m_sUsername;
+			public InternalString* m_sPassword;
+			public InternalString* m_sDatabase;
+
+			public construct(string sxHost, string sxUsername, string sxPassword, string sxDatabase)
+			{
+				m_sHost = own new InternalString(sxHost);
+				m_sUsername = own new InternalString(sxUsername);
+				m_sPassword = own new InternalString(sxPassword);
+				m_sDatabase = own new InternalString(sxDatabase);
+			}
+
+			public static DatabaseSettings** CreateFromConfig(Json pConfig)
+			{
+				if (pConfig == null || !pConfig.IsObject())
+					return null;
+
+				Json pDb = pConfig.GetField("database");
+				if (pDb == null || !pDb.IsObject())
+					return null;
+
+				Json pHost = pDb.GetField("host");
+				if (pHost == null || !pHost.IsString())
+					return null;
+
+				Json pUser = pDb.GetField("username");
+				if (pUser == null || !pUser.IsString())
+					return null;
+
+				Json pPass = pDb.GetField("password");
+				if (pPass == null || !pPass.IsString())
+					return null;
+
+				Json pDbName = pDb.GetField("database");
+				if (pDbName == null || !pDbName.IsString())
+					return null;
+
+				DatabaseSettings* pSettings = own new DatabaseSettings(
+					pHost.GetString(),
+					pUser.GetString(),
+					pPass.GetString(),
+					pDbName.GetString());
+				return disown pSettings;
+			}
+		}
+	}
+}

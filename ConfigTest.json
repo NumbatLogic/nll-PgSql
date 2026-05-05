@@ -1,0 +1,8 @@
+{
+	"database": {
+		"host": "localhost",
+		"username": "test",
+		"password": "test",
+		"database": "dbTest"
+	}
+}

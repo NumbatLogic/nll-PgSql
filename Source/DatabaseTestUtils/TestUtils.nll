@@ -1,0 +1,131 @@
+namespace NumbatLogic
+{
+	namespace Database
+	{
+		class TestUtils
+		{
+			public static DatabaseConnection** ConnectTestDatabase()
+			{
+				Json* pConfig = own new Json();
+				if (!pConfig.LoadFromPath("ConfigTest.json"))
+				{
+					Console::Log("Unable to load ConfigTest.json");
+					Assert::Plz(false);
+				}
+
+				DatabaseSettings* pSettings = own DatabaseSettings::CreateFromConfig(pConfig);
+				if (pSettings == null)
+				{
+					Console::Log("Invalid database config in ConfigTest.json");
+					Assert::Plz(false);
+				}
+
+				string sxDatabase = pSettings.m_sDatabase.GetExternalString();
+				if (!ExternalString::Equal(sxDatabase, "dbTest"))
+				{
+					InternalString* pMsg = own new InternalString("Expected database 'dbTest', got: ");
+					pMsg.Append(sxDatabase);
+					Console::Log(pMsg.GetExternalString());
+					Assert::Plz(false);
+				}
+
+				DatabaseConnection* pDb = own new DatabaseConnection(
+					pSettings.m_sHost.GetExternalString(),
+					pSettings.m_sUsername.GetExternalString(),
+					pSettings.m_sPassword.GetExternalString(),
+					sxDatabase,
+					true);
+				if (!pDb.Connect())
+				{
+					Console::Log("Failed to connect to database");
+					string sxErr = pDb.GetLastError();
+					if (sxErr != null)
+						Console::Log(sxErr);
+					Assert::Plz(false);
+				}
+				return disown pDb;
+			}
+
+			public static void ExecuteSql(string sxSql, DatabaseConnection pDb)
+			{
+				if (pDb.ExecuteRaw(sxSql))
+					return;
+				Console::Log("ExecuteSql failed");
+				Console::Log(sxSql);
+				string sxErr = pDb.GetLastError();
+				if (sxErr != null)
+					Console::Log(sxErr);
+				Assert::Plz(false);
+			}
+
+			public static void ResetTestDatabase()
+			{
+				DatabaseConnection* pDb = own ConnectTestDatabase();
+				DatabaseQuery* pQuery = own new DatabaseQuery();
+				pQuery.SetSql("SELECT tablename FROM pg_tables WHERE schemaname NOT IN ('pg_catalog','information_schema')");
+				if (!pQuery.Execute(pDb))
+				{
+					Console::Log("Failed to enumerate tables");
+					Assert::Plz(false);
+				}
+
+				for (int i = 0; i < pQuery.GetRowCount(); i++)
+				{
+					InternalString* pTableName = own new InternalString("");
+					if (!pQuery.GetString(i, 0, pTableName))
+						continue;
+
+					InternalString* pDropSql = own new InternalString("DROP TABLE IF EXISTS \"");
+					pDropSql.Append(pTableName.GetExternalString());
+					pDropSql.Append("\" CASCADE;");
+					if (!pDb.ExecuteRaw(pDropSql.GetExternalString()))
+					{
+						InternalString* pMsg = own new InternalString("Failed to drop table: ");
+						pMsg.Append(pTableName.GetExternalString());
+						Console::Log(pMsg.GetExternalString());
+						string sxErr = pDb.GetLastError();
+						if (sxErr != null)
+							Console::Log(sxErr);
+						Assert::Plz(false);
+					}
+				}
+
+				DatabaseQuery* pSeqQuery = own new DatabaseQuery();
+				pSeqQuery.SetSql("SELECT schemaname, sequencename FROM pg_sequences WHERE schemaname NOT IN ('pg_catalog','information_schema')");
+				if (!pSeqQuery.Execute(pDb))
+				{
+					Console::Log("Failed to enumerate sequences");
+					Assert::Plz(false);
+				}
+
+				for (int i = 0; i < pSeqQuery.GetRowCount(); i++)
+				{
+					InternalString* pSchemaName = own new InternalString("");
+					InternalString* pSequenceName = own new InternalString("");
+					if (!pSeqQuery.GetString(i, 0, pSchemaName))
+						continue;
+					if (!pSeqQuery.GetString(i, 1, pSequenceName))
+						continue;
+
+					InternalString* pDropSeqSql = own new InternalString("DROP SEQUENCE IF EXISTS \"");
+					pDropSeqSql.Append(pSchemaName.GetExternalString());
+					pDropSeqSql.Append("\".\"");
+					pDropSeqSql.Append(pSequenceName.GetExternalString());
+					pDropSeqSql.Append("\" CASCADE;");
+					if (!pDb.ExecuteRaw(pDropSeqSql.GetExternalString()))
+					{
+						InternalString* pMsg = own new InternalString("Failed to drop sequence: ");
+						pMsg.Append(pSchemaName.GetExternalString());
+						pMsg.Append(".");
+						pMsg.Append(pSequenceName.GetExternalString());
+						Console::Log(pMsg.GetExternalString());
+						string sxErr = pDb.GetLastError();
+						if (sxErr != null)
+							Console::Log(sxErr);
+						Assert::Plz(false);
+					}
+				}
+			}
+		}
+	}
+}

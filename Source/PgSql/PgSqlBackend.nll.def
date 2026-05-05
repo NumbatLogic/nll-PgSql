@@ -1,14 +1,18 @@
 namespace NumbatLogic
 {
-	class PgSqlBackend
+	namespace Database
 	{
-		public construct();
+		class PgSqlBackend
+		{
+			public construct();
 
-		public bool Connect(string sxHost, string sxUsername, string sxPassword, string sxDatabase);
-		public bool Exec(string sxSql);
-		public bool QueryExists(string sxSql);
-		public string GetLastError();
-		public InternalString** QueryFirstRowSingleColumn(string sxSql);
-		public PgSqlResult** ExecuteQuery(string sxSql, int nParams, string sxParamString);
+			public bool Connect(string sxHost, string sxUsername, string sxPassword, string sxDatabase);
+			public bool Exec(string sxSql);
+			public bool QueryExists(string sxSql);
+			public string GetLastError();
+			public string GetParameterPrefix();
+			public InternalString** QueryFirstRowSingleColumn(string sxSql);
+			public PgSqlResult** ExecuteQuery(string sxSql, DatabaseQuery pQuery);
+		}
 	}
 }

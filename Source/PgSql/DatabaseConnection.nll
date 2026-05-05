@@ -1,179 +1,173 @@
 namespace NumbatLogic
 {
-	class DatabaseConnection
+	namespace Database
 	{
-		private PgSqlBackend* m_pBackend;
-
-		private InternalString* m_sHost;
-		private InternalString* m_sUsername;
-		private InternalString* m_sPassword;
-		private InternalString* m_sDatabase;
-		private bool m_bVerbose;
-
-		private InternalString* m_sCachedLastError;
-
-		public construct(string sxHost, string sxUsername, string sxPassword, string sxDatabase, bool bVerbose)
+		class DatabaseConnection
 		{
-			m_pBackend = own new PgSqlBackend();
-			m_sHost = own new InternalString(sxHost);
-			m_sUsername = own new InternalString(sxUsername);
-			m_sPassword = own new InternalString(sxPassword);
-			m_sDatabase = own new InternalString(sxDatabase);
-			m_bVerbose = bVerbose;
-			m_bInTransaction = false;
-			m_bInLazyTransaction = false;
-		}
+			private PgSqlBackend* m_pBackend;
 
-		public bool Connect()
-		{
-			if (!m_pBackend.Connect(m_sHost.GetExternalString(), m_sUsername.GetExternalString(), m_sPassword.GetExternalString(), m_sDatabase.GetExternalString()))
-				return false;
-			if (m_bVerbose)
-				m_pBackend.Exec("SET client_min_messages = NOTICE;");
-			else
-				m_pBackend.Exec("SET client_min_messages = ERROR;");
+			private InternalString* m_sHost;
+			private InternalString* m_sUsername;
+			private InternalString* m_sPassword;
+			private InternalString* m_sDatabase;
+			private bool m_bVerbose;
 
-			return true;
-		}
+			private InternalString* m_sCachedLastError;
 
-		public bool ExecuteRaw(string sxSql)
-		{
-			if (m_sCachedLastError != null)
-				delete m_sCachedLastError;
-			__PromoteLazyTransaction();
-			return m_pBackend.Exec(sxSql);
-		}
-
-		public bool QueryExists(string sxSql)
-		{
-			if (m_sCachedLastError != null)
-				delete m_sCachedLastError;
-			return m_pBackend.QueryExists(sxSql);
-		}
-
-		public string GetLastError()
-		{
-			if (m_sCachedLastError != null)
-				return m_sCachedLastError.GetExternalString();
-			return m_pBackend.GetLastError();
-		}
-
-		public bool ExecuteQuery(DatabaseQuery pQuery)
-		{
-			if (m_sCachedLastError != null)
-				delete m_sCachedLastError;
-			__PromoteLazyTransaction();
-
-			string sxSql = pQuery.GetSql();
-			int nParams = pQuery.GetParameterCount();
-
-			// Change $parameter to $1 etc
-			// Imperfect as it could break within strings...
-			InternalString* sSqlOut = own new InternalString(sxSql);
-			for (int p = 0; p < nParams; p++)
+			public construct(string sxHost, string sxUsername, string sxPassword, string sxDatabase, bool bVerbose)
 			{
-				string sxName = pQuery.GetParameterName(p);
-				if (sxName == null)
-					continue;
-
-				InternalString* sFind = own new InternalString("$");
-				sFind.Append(sxName);
-
-				InternalString* sReplace = own new InternalString("$");
-				sReplace.AppendInt(p + 1);
-
-				sSqlOut.Replace(sFind.GetExternalString(), sReplace.GetExternalString());
+				m_pBackend = own new PgSqlBackend();
+				m_sHost = own new InternalString(sxHost);
+				m_sUsername = own new InternalString(sxUsername);
+				m_sPassword = own new InternalString(sxPassword);
+				m_sDatabase = own new InternalString(sxDatabase);
+				m_bVerbose = bVerbose;
+				m_bInTransaction = false;
+				m_bInLazyTransaction = false;
 			}
 
-			// Should probably look at binary packing one day...
-			InternalString* pParamBuf = own new InternalString("");
-			for (int i = 0; i < nParams; i++)
+			public bool Connect()
 			{
-				if (i > 0)
-					pParamBuf.AppendChar(cast UniChar(1));
-				pParamBuf.Append(pQuery.GetParameterString(i));
-			}
-
-			string sxFinalSql = sSqlOut.GetExternalString();
-			PgSqlResult* pResult = own m_pBackend.ExecuteQuery(sxFinalSql, nParams, pParamBuf.GetExternalString());
-			if (pResult == null)
-			{
+				if (!m_pBackend.Connect(m_sHost.GetExternalString(), m_sUsername.GetExternalString(), m_sPassword.GetExternalString(), m_sDatabase.GetExternalString()))
+					return false;
 				if (m_bVerbose)
-				{
-					InternalString* sMsg = own new InternalString("DatabaseConnection::ExecuteQuery failed.\nSQL: ");
-					sMsg.Append(sxFinalSql);
-					string sxErr = GetLastError();
-					if (sxErr != null)
-					{
-						sMsg.Append("\nError: ");
-						sMsg.Append(sxErr);
-					}
-					Console::Log(sMsg.GetExternalString());
-				}
-				return false;
-			}
-			pQuery.SetResult(disown pResult);
-			return true;
-		}
+					m_pBackend.Exec("SET client_min_messages = NOTICE;");
+				else
+					m_pBackend.Exec("SET client_min_messages = ERROR;");
 
-		// Lazy transactions
-		private bool m_bInTransaction;
-		private bool m_bInLazyTransaction;
-
-		public void TransactionBegin()
-		{
-			Assert::Plz(!m_bInLazyTransaction);
-			Assert::Plz(!m_bInTransaction);
-			m_bInLazyTransaction = true;
-			m_bInTransaction = false;
-
-			if (m_sCachedLastError != null)
-				delete m_sCachedLastError;
-		}
-
-		public void TransactionCommit()
-		{
-			Assert::Plz(m_bInLazyTransaction);
-
-			if (m_bInTransaction)
-			{
-				__PromoteLazyTransaction();
-				bool bOk = m_pBackend.Exec("COMMIT;");
-				Assert::Plz(bOk);
+				return true;
 			}
 
-			m_bInLazyTransaction = false;
-			m_bInTransaction = false;
-		}
-
-		public void TransactionAbort()
-		{
-			Assert::Plz(m_bInLazyTransaction);
-
-			if (m_bInTransaction)
+			public bool ExecuteRaw(string sxSql)
 			{
 				if (m_sCachedLastError != null)
 					delete m_sCachedLastError;
-				string sxErr = GetLastError();
-				if (sxErr != null)
-					m_sCachedLastError = own new InternalString(sxErr);
-
 				__PromoteLazyTransaction();
-				bool bOk = m_pBackend.Exec("ROLLBACK;");
-				Assert::Plz(bOk);
+				return m_pBackend.Exec(sxSql);
 			}
 
-			m_bInLazyTransaction = false;
-			m_bInTransaction = false;
-		}
-
-		public void __PromoteLazyTransaction()
-		{
-			if (m_bInLazyTransaction && !m_bInTransaction)
+			public bool QueryExists(string sxSql)
 			{
-				bool bOk = m_pBackend.Exec("BEGIN;");
-				Assert::Plz(bOk);
-				m_bInTransaction = true;
+				if (m_sCachedLastError != null)
+					delete m_sCachedLastError;
+				return m_pBackend.QueryExists(sxSql);
+			}
+
+			public string GetLastError()
+			{
+				if (m_sCachedLastError != null)
+					return m_sCachedLastError.GetExternalString();
+				return m_pBackend.GetLastError();
+			}
+
+			public bool ExecuteQuery(DatabaseQuery pQuery)
+			{
+				if (m_sCachedLastError != null)
+					delete m_sCachedLastError;
+				__PromoteLazyTransaction();
+
+				string sxSql = pQuery.GetSql();
+				int nParameterCount = pQuery.GetParameterCount();
+				string sxParameterPrefix = m_pBackend.GetParameterPrefix();
+
+				// Change $parameter to $1 etc
+				// Imperfect as it could break within strings...
+				InternalString* sSqlOut = own new InternalString(sxSql);
+				for (int p = 0; p < pQuery.GetParameterCount(); p++)
+				{
+					string sxName = pQuery.GetParameterName(p);
+					Assert::Plz(sxName != null);
+
+					InternalString* sFind = own new InternalString("$");
+					sFind.Append(sxName);
+
+					InternalString* sReplace = own new InternalString(sxParameterPrefix);
+					sReplace.AppendInt(p + 1);
+
+					sSqlOut.Replace(sFind.GetExternalString(), sReplace.GetExternalString());
+				}
+
+				string sxFinalSql = sSqlOut.GetExternalString();
+				PgSqlResult* pResult = own m_pBackend.ExecuteQuery(sxFinalSql, pQuery);
+				if (pResult == null)
+				{
+					if (m_bVerbose)
+					{
+						InternalString* sMsg = own new InternalString("DatabaseConnection::ExecuteQuery failed.\nSQL: ");
+						sMsg.Append(sxFinalSql);
+						string sxErr = GetLastError();
+						if (sxErr != null)
+						{
+							sMsg.Append("\nError: ");
+							sMsg.Append(sxErr);
+						}
+						Console::Log(sMsg.GetExternalString());
+					}
+					return false;
+				}
+				pQuery.SetResult(disown pResult);
+				return true;
+			}
+
+			// Lazy transactions
+			private bool m_bInTransaction;
+			private bool m_bInLazyTransaction;
+
+			public void TransactionBegin()
+			{
+				Assert::Plz(!m_bInLazyTransaction);
+				Assert::Plz(!m_bInTransaction);
+				m_bInLazyTransaction = true;
+				m_bInTransaction = false;
+
+				if (m_sCachedLastError != null)
+					delete m_sCachedLastError;
+			}
+
+			public void TransactionCommit()
+			{
+				Assert::Plz(m_bInLazyTransaction);
+
+				if (m_bInTransaction)
+				{
+					__PromoteLazyTransaction();
+					bool bOk = m_pBackend.Exec("COMMIT;");
+					Assert::Plz(bOk);
+				}
+
+				m_bInLazyTransaction = false;
+				m_bInTransaction = false;
+			}
+
+			public void TransactionAbort()
+			{
+				Assert::Plz(m_bInLazyTransaction);
+
+				if (m_bInTransaction)
+				{
+					if (m_sCachedLastError != null)
+						delete m_sCachedLastError;
+					string sxErr = GetLastError();
+					if (sxErr != null)
+						m_sCachedLastError = own new InternalString(sxErr);
+
+					__PromoteLazyTransaction();
+					bool bOk = m_pBackend.Exec("ROLLBACK;");
+					Assert::Plz(bOk);
+				}
+
+				m_bInLazyTransaction = false;
+				m_bInTransaction = false;
+			}
+
+			public void __PromoteLazyTransaction()
+			{
+				if (m_bInLazyTransaction && !m_bInTransaction)
+				{
+					bool bOk = m_pBackend.Exec("BEGIN;");
+					Assert::Plz(bOk);
+					m_bInTransaction = true;
+				}
 			}
 		}
 	}

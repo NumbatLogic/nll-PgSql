@@ -1,18 +1,22 @@
 namespace NumbatLogic
 {
-	class PgSqlResult
+	namespace Database
 	{
-		public int GetRowCount();
-		public int GetColumnCount();
-		public bool GetString(int nRow, int nCol, InternalString pOut);
-		public bool GetBool(int nRow, int nCol, ref bool pOut);
-		public bool GetInt8(int nRow, int nCol, ref Int8 pOut);
-		public bool GetInt16(int nRow, int nCol, ref Int16 pOut);
-		public bool GetInt32(int nRow, int nCol, ref Int32 pOut);
-		public bool GetUint8(int nRow, int nCol, ref Uint8 pOut);
-		public bool GetUint16(int nRow, int nCol, ref Uint16 pOut);
-		public bool GetUint32(int nRow, int nCol, ref Uint32 pOut);
-		public bool GetFloat(int nRow, int nCol, ref float pOut);
-		public bool GetDouble(int nRow, int nCol, ref double pOut);
+		class PgSqlResult
+		{
+			public int GetRowCount();
+			public int GetColumnCount();
+			public bool GetString(int nRow, int nCol, InternalString pOut);
+			public bool GetBool(int nRow, int nCol, ref bool pOut);
+			public bool GetInt8(int nRow, int nCol, ref Int8 pOut);
+			public bool GetInt16(int nRow, int nCol, ref Int16 pOut);
+			public bool GetInt32(int nRow, int nCol, ref Int32 pOut);
+			public bool GetUint8(int nRow, int nCol, ref Uint8 pOut);
+			public bool GetUint16(int nRow, int nCol, ref Uint16 pOut);
+			public bool GetUint32(int nRow, int nCol, ref Uint32 pOut);
+			public bool GetFloat(int nRow, int nCol, ref float pOut);
+			public bool GetDouble(int nRow, int nCol, ref double pOut);
+			public bool GetBlob(int nRow, int nCol, gsBlob pOut);
+		}
 	}
 }
