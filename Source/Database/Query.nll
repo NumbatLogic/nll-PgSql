@@ -2,63 +2,63 @@ namespace NumbatLogic
 {
 	namespace Database
 	{
-		class DatabaseQueryParameter
+		class QueryParameter
 		{
 			public InternalString* __sName;
-			public DatabaseValue* __pValue;
+			public Value* __pValue;
 
 			public construct(string sxName, Int32 nValue)
 			{
 				__sName = own new InternalString(sxName);
-				__pValue = own new DatabaseValue(nValue);
+				__pValue = own new Value(nValue);
 			}
 
 			public construct(string sxName, Uint32 nValue)
 			{
 				__sName = own new InternalString(sxName);
-				__pValue = own new DatabaseValue(nValue);
+				__pValue = own new Value(nValue);
 			}
 
 			public construct(string sxName, string sxValue)
 			{
 				__sName = own new InternalString(sxName);
-				__pValue = own new DatabaseValue(sxValue);
+				__pValue = own new Value(sxValue);
 			}
 
 			public construct(string sxName, gsBlob pValue)
 			{
 				__sName = own new InternalString(sxName);
-				__pValue = own new DatabaseValue(pValue);
+				__pValue = own new Value(pValue);
 			}
 
 			public construct(string sxName, bool bValue)
 			{
 				__sName = own new InternalString(sxName);
-				__pValue = own new DatabaseValue(bValue);
+				__pValue = own new Value(bValue);
 			}
 
 			public construct(string sxName, Int16 nValue)
 			{
 				__sName = own new InternalString(sxName);
-				__pValue = own new DatabaseValue(nValue);
+				__pValue = own new Value(nValue);
 			}
 
 			public construct(string sxName, double fValue)
 			{
 				__sName = own new InternalString(sxName);
-				__pValue = own new DatabaseValue(fValue);
+				__pValue = own new Value(fValue);
 			}
 		}
 
-		class DatabaseQuery
+		class Query
 		{
 			private InternalString* m_sSql;
-			private OwnedVector<DatabaseQueryParameter>* m_pParameterVector;
-			private PgSqlResult* m_pResult;
+			private OwnedVector<QueryParameter>* m_pParameterVector;
+			private Result* m_pResult;
 
 			public construct()
 			{
-				m_pParameterVector = own new OwnedVector<DatabaseQueryParameter>();
+				m_pParameterVector = own new OwnedVector<QueryParameter>();
 				m_pResult = null;
 			}
 
@@ -75,43 +75,43 @@ namespace NumbatLogic
 
 			public void SetParameterInt32(string sxName, Int32 nValue)
 			{
-				DatabaseQueryParameter* pParameter = own new DatabaseQueryParameter(sxName, nValue);
+				QueryParameter* pParameter = own new QueryParameter(sxName, nValue);
 				m_pParameterVector.PushBack(disown pParameter);
 			}
 
 			public void SetParameterUint32(string sxName, Uint32 nValue)
 			{
-				DatabaseQueryParameter* pParameter = own new DatabaseQueryParameter(sxName, nValue);
+				QueryParameter* pParameter = own new QueryParameter(sxName, nValue);
 				m_pParameterVector.PushBack(disown pParameter);
 			}
 
 			public void SetParameter(string sxName, string sxValue)
 			{
-				DatabaseQueryParameter* pParameter = own new DatabaseQueryParameter(sxName, sxValue);
+				QueryParameter* pParameter = own new QueryParameter(sxName, sxValue);
 				m_pParameterVector.PushBack(disown pParameter);
 			}
 
 			public void SetParameter(string sxName, gsBlob pValue)
 			{
-				DatabaseQueryParameter* pParameter = own new DatabaseQueryParameter(sxName, pValue);
+				QueryParameter* pParameter = own new QueryParameter(sxName, pValue);
 				m_pParameterVector.PushBack(disown pParameter);
 			}
 
 			public void SetParameter(string sxName, bool bValue)
 			{
-				DatabaseQueryParameter* pParameter = own new DatabaseQueryParameter(sxName, bValue);
+				QueryParameter* pParameter = own new QueryParameter(sxName, bValue);
 				m_pParameterVector.PushBack(disown pParameter);
 			}
 
 			public void SetParameterInt16(string sxName, Int16 nValue)
 			{
-				DatabaseQueryParameter* pParameter = own new DatabaseQueryParameter(sxName, nValue);
+				QueryParameter* pParameter = own new QueryParameter(sxName, nValue);
 				m_pParameterVector.PushBack(disown pParameter);
 			}
 
 			public void SetParameterDouble(string sxName, double fValue)
 			{
-				DatabaseQueryParameter* pParameter = own new DatabaseQueryParameter(sxName, fValue);
+				QueryParameter* pParameter = own new QueryParameter(sxName, fValue);
 				m_pParameterVector.PushBack(disown pParameter);
 			}
 
@@ -137,7 +137,7 @@ namespace NumbatLogic
 				return m_pParameterVector.Get(nIndex).__pValue.GetAsString();
 			}
 
-			public DatabaseValue::Type GetParameterType(int nIndex)
+			public Value::Type GetParameterType(int nIndex)
 			{
 				return m_pParameterVector.Get(nIndex).__pValue.__eType;
 			}
@@ -177,12 +177,12 @@ namespace NumbatLogic
 				return m_pParameterVector.Get(nIndex).__pValue.GetTextExternal();
 			}
 
-			public bool Execute(DatabaseConnection pConn)
+			public bool Execute(Connection pConn)
 			{
 				return pConn.ExecuteQuery(this);
 			}
 
-			public void SetResult(PgSqlResult** pResult)
+			public void SetResult(Result** pResult)
 			{
 				if (m_pResult != null)
 					delete m_pResult;

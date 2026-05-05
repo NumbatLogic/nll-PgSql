@@ -6,7 +6,7 @@ namespace NumbatLogic
 		{
 			public static void Run()
 			{
-				DatabaseQuery* pQuery = own new DatabaseQuery();
+				Query* pQuery = own new Query();
 				pQuery.SetSql("SELECT 1");
 				Assert::Plz(ExternalString::Equal(pQuery.GetSql(), "SELECT 1"));
 				Assert::Plz(pQuery.GetParameterCount() == 0);

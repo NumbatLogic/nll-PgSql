@@ -22,9 +22,8 @@ namespace NumbatLogic
 
 			public static void Run()
 			{
-				DatabaseConnection* pDb = own TestUtils::ConnectTestDatabase();
-
-				TestUtils::ExecuteSql("DROP TABLE IF EXISTS \"PGT_tblOrmFieldsRoundtrip\" CASCADE;", pDb);
+				Connection* pDb = own TestUtils::ConnectTestDatabase();
+				TestUtils::ResetTestDatabase();
 
 				InternalString* pCreate = own new InternalString("");
 				pCreate.Append("CREATE TABLE \"PGT_tblOrmFieldsRoundtrip\" (");
@@ -52,7 +51,7 @@ namespace NumbatLogic
 				pInsertSql.Append("\"fScore\",\"fWeight\",\"sTitle\",\"uCorrelation\",\"binPayload\"");
 				pInsertSql.Append(") VALUES ($id,$small,$aux,$flag,$ts::timestamptz,$score,$weight,$title,$uuid::uuid,$blob)");
 
-				DatabaseQuery* pIns = own new DatabaseQuery();
+				Query* pIns = own new Query();
 				pIns.SetSql(pInsertSql.GetExternalString());
 				Int32 nIdIns;
 				nIdIns = 9001;
@@ -84,7 +83,7 @@ namespace NumbatLogic
 				pSelectSql.Append("\"binPayload\" FROM \"PGT_tblOrmFieldsRoundtrip\" ");
 				pSelectSql.Append("WHERE \"nOrmFieldsRoundtripId\" = $id");
 
-				DatabaseQuery* pSel = own new DatabaseQuery();
+				Query* pSel = own new Query();
 				pSel.SetSql(pSelectSql.GetExternalString());
 				Int32 nIdSel;
 				nIdSel = 9001;
@@ -138,8 +137,6 @@ namespace NumbatLogic
 				Assert::Plz(pRead.UnpackUint8(ref b1));
 				Assert::Plz(b0 == 190);
 				Assert::Plz(b1 == 239);
-
-				TestUtils::ExecuteSql("DROP TABLE IF EXISTS \"PGT_tblOrmFieldsRoundtrip\" CASCADE;", pDb);
 			}
 		}
 	}

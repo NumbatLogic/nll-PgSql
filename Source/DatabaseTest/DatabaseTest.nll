@@ -2,11 +2,11 @@ namespace NumbatLogic
 {
 	namespace Database
 	{
-		class PgSqlTest
+		class DatabaseTest
 		{
 			public static void @EntryPoint() Run(Vector<string> sArgVector)
 			{
-				Console::Log("PgSqlTest");
+				Console::Log("DatabaseTest");
 
 				/*<?
 					include_once "../../../LangShared/Source/Test/TestMetaprogramming.php";

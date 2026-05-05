@@ -4,7 +4,7 @@ namespace NumbatLogic
 	{
 		class TestUtils
 		{
-			public static DatabaseConnection** ConnectTestDatabase()
+			public static Connection** ConnectTestDatabase()
 			{
 				Json* pConfig = own new Json();
 				if (!pConfig.LoadFromPath("ConfigTest.json"))
@@ -13,7 +13,7 @@ namespace NumbatLogic
 					Assert::Plz(false);
 				}
 
-				DatabaseSettings* pSettings = own DatabaseSettings::CreateFromConfig(pConfig);
+				Settings* pSettings = own Settings::CreateFromConfig(pConfig);
 				if (pSettings == null)
 				{
 					Console::Log("Invalid database config in ConfigTest.json");
@@ -29,7 +29,7 @@ namespace NumbatLogic
 					Assert::Plz(false);
 				}
 
-				DatabaseConnection* pDb = own new DatabaseConnection(
+				Connection* pDb = own new Connection(
 					pSettings.m_sHost.GetExternalString(),
 					pSettings.m_sUsername.GetExternalString(),
 					pSettings.m_sPassword.GetExternalString(),
@@ -46,7 +46,7 @@ namespace NumbatLogic
 				return disown pDb;
 			}
 
-			public static void ExecuteSql(string sxSql, DatabaseConnection pDb)
+			public static void ExecuteSql(string sxSql, Connection pDb)
 			{
 				if (pDb.ExecuteRaw(sxSql))
 					return;
@@ -60,8 +60,8 @@ namespace NumbatLogic
 
 			public static void ResetTestDatabase()
 			{
-				DatabaseConnection* pDb = own ConnectTestDatabase();
-				DatabaseQuery* pQuery = own new DatabaseQuery();
+				Connection* pDb = own ConnectTestDatabase();
+				Query* pQuery = own new Query();
 				pQuery.SetSql("SELECT tablename FROM pg_tables WHERE schemaname NOT IN ('pg_catalog','information_schema')");
 				if (!pQuery.Execute(pDb))
 				{
@@ -90,7 +90,7 @@ namespace NumbatLogic
 					}
 				}
 
-				DatabaseQuery* pSeqQuery = own new DatabaseQuery();
+				Query* pSeqQuery = own new Query();
 				pSeqQuery.SetSql("SELECT schemaname, sequencename FROM pg_sequences WHERE schemaname NOT IN ('pg_catalog','information_schema')");
 				if (!pSeqQuery.Execute(pDb))
 				{

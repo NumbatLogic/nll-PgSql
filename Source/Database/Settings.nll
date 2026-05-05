@@ -2,7 +2,7 @@ namespace NumbatLogic
 {
 	namespace Database
 	{
-		class DatabaseSettings
+		class Settings
 		{
 			public InternalString* m_sHost;
 			public InternalString* m_sUsername;
@@ -17,7 +17,7 @@ namespace NumbatLogic
 				m_sDatabase = own new InternalString(sxDatabase);
 			}
 
-			public static DatabaseSettings** CreateFromConfig(Json pConfig)
+			public static Settings** CreateFromConfig(Json pConfig)
 			{
 				if (pConfig == null || !pConfig.IsObject())
 					return null;
@@ -42,7 +42,7 @@ namespace NumbatLogic
 				if (pDbName == null || !pDbName.IsString())
 					return null;
 
-				DatabaseSettings* pSettings = own new DatabaseSettings(
+				Settings* pSettings = own new Settings(
 					pHost.GetString(),
 					pUser.GetString(),
 					pPass.GetString(),

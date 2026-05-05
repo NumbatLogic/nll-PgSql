@@ -1,7 +1,7 @@
-#include "PgSqlBackend.hpp"
-#include "PgSqlResult.hpp"
-#include "../../../Transpiled/PgSql/DatabaseQuery.hpp"
-#include "../../../Transpiled/PgSql/DatabaseValue.hpp"
+#include "Backend.hpp"
+#include "Result.hpp"
+#include "../../../Transpiled/Database/Query.hpp"
+#include "../../../Transpiled/Database/Value.hpp"
 #include "../../../../LangShared/Source/Assert/CPP/Assert.hpp"
 #include "../../../../LangShared/Source/InternalString/CPP/InternalString.hpp"
 #include "../../../../LangShared/Source/Blob/CPP/Blob.hpp"
@@ -54,13 +54,13 @@ namespace NumbatLogic
 			}
 		}
 
-		PgSqlBackend::PgSqlBackend()
+		Backend::Backend()
 			: m_pConn(nullptr)
 			, m_sLastError(nullptr)
 		{
 		}
 
-		PgSqlBackend::~PgSqlBackend()
+		Backend::~Backend()
 		{
 			if (m_pConn)
 			{
@@ -71,7 +71,7 @@ namespace NumbatLogic
 			m_sLastError = nullptr;
 		}
 
-		bool PgSqlBackend::Connect(const char* sxHost, const char* sxUsername, const char* sxPassword, const char* sxDatabase)
+		bool Backend::Connect(const char* sxHost, const char* sxUsername, const char* sxPassword, const char* sxDatabase)
 		{
 			if (m_pConn)
 			{
@@ -100,7 +100,7 @@ namespace NumbatLogic
 			return true;
 		}
 
-		bool PgSqlBackend::Exec(const char* sxSql)
+		bool Backend::Exec(const char* sxSql)
 		{
 			if (!m_pConn || !sxSql)
 			{
@@ -128,7 +128,7 @@ namespace NumbatLogic
 			return true;
 		}
 
-		bool PgSqlBackend::QueryExists(const char* sxSql)
+		bool Backend::QueryExists(const char* sxSql)
 		{
 			if (!m_pConn || !sxSql)
 			{
@@ -154,17 +154,17 @@ namespace NumbatLogic
 			return bHasRows;
 		}
 
-		const char* PgSqlBackend::GetLastError()
+		const char* Backend::GetLastError()
 		{
 			return m_sLastError ? m_sLastError->GetExternalString() : "";
 		}
 
-		const char* PgSqlBackend::GetParameterPrefix()
+		const char* Backend::GetParameterPrefix()
 		{
 			return "$";
 		}
 
-		InternalString* PgSqlBackend::QueryFirstRowSingleColumn(const char* sxSql)
+		InternalString* Backend::QueryFirstRowSingleColumn(const char* sxSql)
 		{
 			if (!m_pConn || !sxSql)
 			{
@@ -189,7 +189,7 @@ namespace NumbatLogic
 			return pOut;
 		}
 
-		PgSqlResult* PgSqlBackend::ExecuteQuery(const char* sxSql, DatabaseQuery* pQuery)
+		Result* Backend::ExecuteQuery(const char* sxSql, Query* pQuery)
 		{
 			if (!m_pConn || !sxSql || !pQuery)
 			{
@@ -221,17 +221,17 @@ namespace NumbatLogic
 					pParamFormats[i] = 0;
 					pParamTypes[i] = 0;
 
-					DatabaseValue::Type eType = pQuery->GetParameterType(i);
+					Value::Type eType = pQuery->GetParameterType(i);
 					switch (eType)
 					{
-						case DatabaseValue::Type::STRING:
+						case Value::Type::STRING:
 						{
 							pParamValues[i] = pQuery->GetParameterTextExternal(i);
 							pParamFormats[i] = 0;
 							pParamTypes[i] = 0;
 							break;
 						}
-						case DatabaseValue::Type::BOOL:
+						case Value::Type::BOOL:
 						{
 							paramBinary[static_cast<size_t>(i)].resize(1);
 							paramBinary[static_cast<size_t>(i)][0] = pQuery->GetParameterBool(i) ? 1 : 0;
@@ -241,7 +241,7 @@ namespace NumbatLogic
 							pParamTypes[i] = BOOLOID;
 							break;
 						}
-						case DatabaseValue::Type::INT16:
+						case Value::Type::INT16:
 						{
 							short v = pQuery->GetParameterInt16(i);
 							uint16_t rawBits = 0;
@@ -255,7 +255,7 @@ namespace NumbatLogic
 							pParamTypes[i] = INT2OID;
 							break;
 						}
-						case DatabaseValue::Type::INT32:
+						case Value::Type::INT32:
 						{
 							int v = pQuery->GetParameterInt32(i);
 							uint32_t net = htonl(static_cast<uint32_t>(v));
@@ -267,7 +267,7 @@ namespace NumbatLogic
 							pParamTypes[i] = INT4OID;
 							break;
 						}
-						case DatabaseValue::Type::UINT32:
+						case Value::Type::UINT32:
 						{
 							unsigned int v = pQuery->GetParameterUint32(i);
 							uint32_t net = htonl(static_cast<uint32_t>(v));
@@ -279,7 +279,7 @@ namespace NumbatLogic
 							pParamTypes[i] = INT4OID;
 							break;
 						}
-						case DatabaseValue::Type::DOUBLE:
+						case Value::Type::DOUBLE:
 						{
 							double v = pQuery->GetParameterDouble(i);
 							uint64_t raw = 0;
@@ -293,7 +293,7 @@ namespace NumbatLogic
 							pParamTypes[i] = FLOAT8OID;
 							break;
 						}
-						case DatabaseValue::Type::BLOB:
+						case Value::Type::BLOB:
 						{
 							gsBlob* pBlob = pQuery->GetParameterBlob(i);
 							Assert::Plz(pBlob != nullptr);
@@ -334,7 +334,7 @@ namespace NumbatLogic
 			}
 
 			ClearLastError(m_sLastError);
-			return new PgSqlResult(pResult);
+			return new Result(pResult);
 		}
 	}
 }

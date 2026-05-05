@@ -8,11 +8,11 @@ namespace NumbatLogic
 	class InternalString;
 	namespace Database
 	{
-		class PgSqlResult
+		class Result
 		{
 			public:
-				explicit PgSqlResult(PGresult* pResult);
-				~PgSqlResult();
+				explicit Result(PGresult* pResult);
+				~Result();
 
 				int GetRowCount();
 				int GetColumnCount();

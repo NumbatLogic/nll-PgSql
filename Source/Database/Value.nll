@@ -2,7 +2,7 @@ namespace NumbatLogic
 {
 	namespace Database
 	{
-		class DatabaseValue
+		class Value
 		{
 			public enum Type {
 				UINT32,

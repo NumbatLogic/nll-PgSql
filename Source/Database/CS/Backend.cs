@@ -4,12 +4,12 @@ using NpgsqlTypes;
 
 namespace NumbatLogic.Database
 {
-	public class PgSqlBackend
+	public class Backend
 	{
 		private NpgsqlConnection m_pConn;
 		private string m_sLastError;
 
-		public PgSqlBackend()
+		public Backend()
 		{
 			m_pConn = null;
 			m_sLastError = null;
@@ -148,7 +148,7 @@ namespace NumbatLogic.Database
 			}
 		}
 
-		public PgSqlResult ExecuteQuery(string sxSql, DatabaseQuery pQuery)
+		public Result ExecuteQuery(string sxSql, Query pQuery)
 		{
 			if (m_pConn == null || sxSql == null || pQuery == null)
 			{
@@ -167,22 +167,22 @@ namespace NumbatLogic.Database
 						string paramName = "p" + (i + 1).ToString();
 						switch (pQuery.GetParameterType(i))
 						{
-							case DatabaseValue.Type.UINT32:
+							case Value.Type.UINT32:
 								cmd.Parameters.AddWithValue(paramName, pQuery.GetParameterUint32(i));
 								break;
-							case DatabaseValue.Type.INT32:
+							case Value.Type.INT32:
 								cmd.Parameters.AddWithValue(paramName, pQuery.GetParameterInt32(i));
 								break;
-							case DatabaseValue.Type.INT16:
+							case Value.Type.INT16:
 								cmd.Parameters.AddWithValue(paramName, pQuery.GetParameterInt16(i));
 								break;
-							case DatabaseValue.Type.BOOL:
+							case Value.Type.BOOL:
 								cmd.Parameters.AddWithValue(paramName, pQuery.GetParameterBool(i));
 								break;
-							case DatabaseValue.Type.DOUBLE:
+							case Value.Type.DOUBLE:
 								cmd.Parameters.AddWithValue(paramName, pQuery.GetParameterDouble(i));
 								break;
-							case DatabaseValue.Type.BLOB:
+							case Value.Type.BLOB:
 							{
 								gsBlob pBlob = pQuery.GetParameterBlob(i);
 								byte[] blob = pBlob == null || pBlob.__nSize <= 0
@@ -194,7 +194,7 @@ namespace NumbatLogic.Database
 								dbParam.Value = blob;
 								break;
 							}
-							case DatabaseValue.Type.STRING:
+							case Value.Type.STRING:
 							{
 								string sxText = pQuery.GetParameterTextExternal(i) ?? string.Empty;
 								cmd.Parameters.AddWithValue(paramName, sxText);
@@ -211,7 +211,7 @@ namespace NumbatLogic.Database
 
 					using (var reader = cmd.ExecuteReader())
 					{
-						var result = new PgSqlResult(reader);
+						var result = new Result(reader);
 						ClearLastError();
 						return result;
 					}

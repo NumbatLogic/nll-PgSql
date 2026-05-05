@@ -18,7 +18,7 @@
 		public function GetDependancyArray()
 		{
 			return array(
-				"PgSql",
+				"Database",
 				"LangShared",
 			);
 		}

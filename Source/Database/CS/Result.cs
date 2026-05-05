@@ -4,12 +4,12 @@ using Npgsql;
 
 namespace NumbatLogic.Database
 {
-	public class PgSqlResult
+	public class Result
 	{
 		private readonly List<object[]> m_pRows;
 		private readonly int m_nColumnCount;
 
-		public PgSqlResult(NpgsqlDataReader reader)
+		public Result(NpgsqlDataReader reader)
 		{
 			if (reader == null)
 			{

@@ -2,9 +2,9 @@ namespace NumbatLogic
 {
 	namespace Database
 	{
-		class DatabaseConnection
+		class Connection
 		{
-			private PgSqlBackend* m_pBackend;
+			private Backend* m_pBackend;
 
 			private InternalString* m_sHost;
 			private InternalString* m_sUsername;
@@ -16,7 +16,7 @@ namespace NumbatLogic
 
 			public construct(string sxHost, string sxUsername, string sxPassword, string sxDatabase, bool bVerbose)
 			{
-				m_pBackend = own new PgSqlBackend();
+				m_pBackend = own new Backend();
 				m_sHost = own new InternalString(sxHost);
 				m_sUsername = own new InternalString(sxUsername);
 				m_sPassword = own new InternalString(sxPassword);
@@ -60,7 +60,7 @@ namespace NumbatLogic
 				return m_pBackend.GetLastError();
 			}
 
-			public bool ExecuteQuery(DatabaseQuery pQuery)
+			public bool ExecuteQuery(Query pQuery)
 			{
 				if (m_sCachedLastError != null)
 					delete m_sCachedLastError;
@@ -88,12 +88,12 @@ namespace NumbatLogic
 				}
 
 				string sxFinalSql = sSqlOut.GetExternalString();
-				PgSqlResult* pResult = own m_pBackend.ExecuteQuery(sxFinalSql, pQuery);
+				Result* pResult = own m_pBackend.ExecuteQuery(sxFinalSql, pQuery);
 				if (pResult == null)
 				{
 					if (m_bVerbose)
 					{
-						InternalString* sMsg = own new InternalString("DatabaseConnection::ExecuteQuery failed.\nSQL: ");
+						InternalString* sMsg = own new InternalString("Connection::ExecuteQuery failed.\nSQL: ");
 						sMsg.Append(sxFinalSql);
 						string sxErr = GetLastError();
 						if (sxErr != null)

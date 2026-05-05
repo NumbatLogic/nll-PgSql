@@ -1,16 +1,16 @@
 <?php
-	class PgSql_Config extends Project_Config
+	class Database_Config extends Project_Config
 	{	
 		public function __construct($sAction)
 		{
 			parent::__construct($sAction);
 			$this->m_xFileArray = array_merge(
 				ProjectGen_ParseDirectory(dirname(__FILE__), ProjectGen_GetSourceRegex($sAction)),
-				ProjectGen_ParseDirectory(dirname(__FILE__) . "/../../Transpiled/PgSql", ProjectGen_GetSourceRegex($sAction))
+				ProjectGen_ParseDirectory(dirname(__FILE__) . "/../../Transpiled/Database", ProjectGen_GetSourceRegex($sAction))
 			);
 		}
 
-		public function GetName() { return "PgSql"; }
+		public function GetName() { return "Database"; }
 		public function GetKind() { return KIND_STATIC_LIBRARY; }
 		public function GetBaseDirectory() { return dirname(__FILE__); }
 

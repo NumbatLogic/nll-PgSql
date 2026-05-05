@@ -1,19 +1,19 @@
 #pragma once
 
 #include <libpq-fe.h>
-#include "PgSqlResult.hpp"
+#include "Result.hpp"
 
 namespace NumbatLogic
 {
 	class InternalString;
 	namespace Database
 	{
-		class DatabaseQuery;
-		class PgSqlBackend
+		class Query;
+		class Backend
 		{
 			public:
-				PgSqlBackend();
-				~PgSqlBackend();
+				Backend();
+				~Backend();
 
 				bool Connect(const char* sxHost, const char* sxUsername, const char* sxPassword, const char* sxDatabase);
 				bool Exec(const char* sxSql);
@@ -21,7 +21,7 @@ namespace NumbatLogic
 				const char* GetLastError();
 				const char* GetParameterPrefix();
 				InternalString* QueryFirstRowSingleColumn(const char* sxSql);
-				PgSqlResult* ExecuteQuery(const char* sxSql, DatabaseQuery* pQuery);
+				Result* ExecuteQuery(const char* sxSql, Query* pQuery);
 
 			private:
 				PGconn* m_pConn;

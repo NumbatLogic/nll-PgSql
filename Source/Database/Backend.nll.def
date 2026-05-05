@@ -2,7 +2,7 @@ namespace NumbatLogic
 {
 	namespace Database
 	{
-		class PgSqlBackend
+		class Backend
 		{
 			public construct();
 
@@ -12,7 +12,7 @@ namespace NumbatLogic
 			public string GetLastError();
 			public string GetParameterPrefix();
 			public InternalString** QueryFirstRowSingleColumn(string sxSql);
-			public PgSqlResult** ExecuteQuery(string sxSql, DatabaseQuery pQuery);
+			public Result** ExecuteQuery(string sxSql, Query pQuery);
 		}
 	}
 }

@@ -1,4 +1,4 @@
-#include "PgSqlResult.hpp"
+#include "Result.hpp"
 #include "../../../../LangShared/Source/InternalString/CPP/InternalString.hpp"
 #include "../../../../LangShared/Source/Blob/CPP/Blob.hpp"
 #include <arpa/inet.h>
@@ -111,12 +111,12 @@ namespace NumbatLogic
 			return false;
 		}
 
-		PgSqlResult::PgSqlResult(PGresult* pResult)
+		Result::Result(PGresult* pResult)
 			: m_pResult(pResult)
 		{
 		}
 
-		PgSqlResult::~PgSqlResult()
+		Result::~Result()
 		{
 			if (m_pResult)
 			{
@@ -125,17 +125,17 @@ namespace NumbatLogic
 			}
 		}
 
-		int PgSqlResult::GetRowCount()
+		int Result::GetRowCount()
 		{
 			return m_pResult ? PQntuples(m_pResult) : 0;
 		}
 
-		int PgSqlResult::GetColumnCount()
+		int Result::GetColumnCount()
 		{
 			return m_pResult ? PQnfields(m_pResult) : 0;
 		}
 
-		bool PgSqlResult::GetString(int nRow, int nCol, InternalString* pOut)
+		bool Result::GetString(int nRow, int nCol, InternalString* pOut)
 		{
 			if (!pOut || !IsValidCell(m_pResult, nRow, nCol))
 				return false;
@@ -152,7 +152,7 @@ namespace NumbatLogic
 			return true;
 		}
 
-		bool PgSqlResult::GetBool(int nRow, int nCol, bool& outVal)
+		bool Result::GetBool(int nRow, int nCol, bool& outVal)
 		{
 			const unsigned char* pData = nullptr;
 			int nLen = 0;
@@ -163,7 +163,7 @@ namespace NumbatLogic
 		return true;
 		}
 
-		bool PgSqlResult::GetInt8(int nRow, int nCol, signed char& outVal)
+		bool Result::GetInt8(int nRow, int nCol, signed char& outVal)
 		{
 			int64_t nBinary = 0;
 			if (!TryGetBinaryInt64(m_pResult, nRow, nCol, nBinary))
@@ -174,7 +174,7 @@ namespace NumbatLogic
 			return true;
 		}
 
-		bool PgSqlResult::GetInt16(int nRow, int nCol, short& outVal)
+		bool Result::GetInt16(int nRow, int nCol, short& outVal)
 		{
 			int64_t nBinary = 0;
 			if (!TryGetBinaryInt64(m_pResult, nRow, nCol, nBinary))
@@ -185,7 +185,7 @@ namespace NumbatLogic
 			return true;
 		}
 
-		bool PgSqlResult::GetInt32(int nRow, int nCol, int& outVal)
+		bool Result::GetInt32(int nRow, int nCol, int& outVal)
 		{
 			int64_t nBinary = 0;
 			if (!TryGetBinaryInt64(m_pResult, nRow, nCol, nBinary))
@@ -196,7 +196,7 @@ namespace NumbatLogic
 			return true;
 		}
 
-		bool PgSqlResult::GetUint8(int nRow, int nCol, unsigned char& outVal)
+		bool Result::GetUint8(int nRow, int nCol, unsigned char& outVal)
 		{
 			int64_t nBinary = 0;
 			if (!TryGetBinaryInt64(m_pResult, nRow, nCol, nBinary))
@@ -207,7 +207,7 @@ namespace NumbatLogic
 			return true;
 		}
 
-		bool PgSqlResult::GetUint16(int nRow, int nCol, unsigned short& outVal)
+		bool Result::GetUint16(int nRow, int nCol, unsigned short& outVal)
 		{
 			int64_t nBinary = 0;
 			if (!TryGetBinaryInt64(m_pResult, nRow, nCol, nBinary))
@@ -218,7 +218,7 @@ namespace NumbatLogic
 			return true;
 		}
 
-		bool PgSqlResult::GetUint32(int nRow, int nCol, unsigned int& outVal)
+		bool Result::GetUint32(int nRow, int nCol, unsigned int& outVal)
 		{
 			int64_t nBinary = 0;
 			if (!TryGetBinaryInt64(m_pResult, nRow, nCol, nBinary))
@@ -229,7 +229,7 @@ namespace NumbatLogic
 			return true;
 		}
 
-		bool PgSqlResult::GetFloat(int nRow, int nCol, float& outVal)
+		bool Result::GetFloat(int nRow, int nCol, float& outVal)
 		{
 			double dBinary = 0.0;
 			if (!TryGetBinaryDouble(m_pResult, nRow, nCol, dBinary))
@@ -238,12 +238,12 @@ namespace NumbatLogic
 			return true;
 		}
 
-		bool PgSqlResult::GetDouble(int nRow, int nCol, double& outVal)
+		bool Result::GetDouble(int nRow, int nCol, double& outVal)
 		{
 			return TryGetBinaryDouble(m_pResult, nRow, nCol, outVal);
 		}
 
-		bool PgSqlResult::GetBlob(int nRow, int nCol, gsBlob* pOut)
+		bool Result::GetBlob(int nRow, int nCol, gsBlob* pOut)
 		{
 			if (!m_pResult || !pOut || nRow < 0 || nCol < 0 ||
 				nRow >= PQntuples(m_pResult) || nCol >= PQnfields(m_pResult))
