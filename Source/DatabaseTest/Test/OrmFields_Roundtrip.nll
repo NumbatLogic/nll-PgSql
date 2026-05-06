@@ -59,8 +59,8 @@ namespace NumbatLogic
 				nSmallIns = -42;
 				Int32 nAuxIns;
 				nAuxIns = 1001;
-				double fScoreIns;
-				fScoreIns = 2.25;
+				float fScoreIns;
+				fScoreIns = 2.25f;
 				double fWeightIns;
 				fWeightIns = 3.141592653589793;
 				pIns.SetParameterInt32("id", nIdIns);
@@ -68,7 +68,7 @@ namespace NumbatLogic
 				pIns.SetParameterInt32("aux", nAuxIns);
 				pIns.SetParameter("flag", true);
 				pIns.SetParameter("ts", "2006-05-04 12:34:56+00");
-				pIns.SetParameterDouble("score", fScoreIns);
+				pIns.SetParameterFloat("score", fScoreIns);
 				pIns.SetParameterDouble("weight", fWeightIns);
 				pIns.SetParameter("title", "hello orm");
 				pIns.SetParameter("uuid", "11111111-2222-3333-4444-555555555555");

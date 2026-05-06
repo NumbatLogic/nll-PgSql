@@ -48,6 +48,12 @@ namespace NumbatLogic
 				__sName = own new InternalString(sxName);
 				__pValue = own new Value(fValue);
 			}
+
+			public construct(string sxName, float fValue)
+			{
+				__sName = own new InternalString(sxName);
+				__pValue = own new Value(fValue);
+			}
 		}
 
 		class Query
@@ -115,6 +121,12 @@ namespace NumbatLogic
 				m_pParameterVector.PushBack(disown pParameter);
 			}
 
+			public void SetParameterFloat(string sxName, float fValue)
+			{
+				QueryParameter* pParameter = own new QueryParameter(sxName, fValue);
+				m_pParameterVector.PushBack(disown pParameter);
+			}
+
 			public string GetSql()
 			{
 				if (m_sSql == null)
@@ -168,6 +180,11 @@ namespace NumbatLogic
 			}
 
 			public double GetParameterDouble(int nIndex)
+			{
+				return m_pParameterVector.Get(nIndex).__pValue.GetDouble();
+			}
+
+			public float GetParameterFloat(int nIndex)
 			{
 				return m_pParameterVector.Get(nIndex).__pValue.GetDouble();
 			}
@@ -251,7 +268,7 @@ namespace NumbatLogic
 					return false;
 				return m_pResult.GetDouble(nRow, nCol, ref pOut);
 			}
-			
+
 			public bool GetBlob(int nRow, int nCol, gsBlob pOut)
 			{
 				if (m_pResult == null)
