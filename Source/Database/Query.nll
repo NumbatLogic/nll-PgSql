@@ -13,12 +13,6 @@ namespace NumbatLogic
 				__pValue = own new Value(nValue);
 			}
 
-			public construct(string sxName, Uint32 nValue)
-			{
-				__sName = own new InternalString(sxName);
-				__pValue = own new Value(nValue);
-			}
-
 			public construct(string sxName, string sxValue)
 			{
 				__sName = own new InternalString(sxName);
@@ -91,12 +85,6 @@ namespace NumbatLogic
 				m_pParameterVector.PushBack(disown pParameter);
 			}
 
-			public void SetParameterUint32(string sxName, Uint32 nValue)
-			{
-				QueryParameter* pParameter = own new QueryParameter(sxName, nValue);
-				m_pParameterVector.PushBack(disown pParameter);
-			}
-
 			public void SetParameter(string sxName, string sxValue)
 			{
 				QueryParameter* pParameter = own new QueryParameter(sxName, sxValue);
@@ -157,11 +145,6 @@ namespace NumbatLogic
 			public gsBlob GetParameterBlob(int nIndex)
 			{
 				return m_pParameterVector.Get(nIndex).__pValue.GetBlob();
-			}
-
-			public Uint32 GetParameterUint32(int nIndex)
-			{
-				return m_pParameterVector.Get(nIndex).__pValue.GetUint32();
 			}
 
 			public Int32 GetParameterInt32(int nIndex)
@@ -233,60 +216,42 @@ namespace NumbatLogic
 					return false;
 				return m_pResult.GetBool(nRow, nCol, ref pOut);
 			}
-			public bool GetInt8(int nRow, int nCol, ref Int8 pOut)
-			{
-				if (m_pResult == null)
-					return false;
-				return m_pResult.GetInt8(nRow, nCol, ref pOut);
-			}
+
 			public bool GetInt16(int nRow, int nCol, ref Int16 pOut)
 			{
 				if (m_pResult == null)
 					return false;
 				return m_pResult.GetInt16(nRow, nCol, ref pOut);
 			}
+
 			public bool GetInt32(int nRow, int nCol, ref Int32 pOut)
 			{
 				if (m_pResult == null)
 					return false;
 				return m_pResult.GetInt32(nRow, nCol, ref pOut);
 			}
+
 			public bool GetInt64(int nRow, int nCol, ref Int64 pOut)
 			{
 				if (m_pResult == null)
 					return false;
 				return m_pResult.GetInt64(nRow, nCol, ref pOut);
 			}
-			public bool GetUint8(int nRow, int nCol, ref Uint8 pOut)
-			{
-				if (m_pResult == null)
-					return false;
-				return m_pResult.GetUint8(nRow, nCol, ref pOut);
-			}
-			public bool GetUint16(int nRow, int nCol, ref Uint16 pOut)
-			{
-				if (m_pResult == null)
-					return false;
-				return m_pResult.GetUint16(nRow, nCol, ref pOut);
-			}
-			public bool GetUint32(int nRow, int nCol, ref Uint32 pOut)
-			{
-				if (m_pResult == null)
-					return false;
-				return m_pResult.GetUint32(nRow, nCol, ref pOut);
-			}
+
 			public bool GetFloat(int nRow, int nCol, ref float pOut)
 			{
 				if (m_pResult == null)
 					return false;
 				return m_pResult.GetFloat(nRow, nCol, ref pOut);
 			}
+
 			public bool GetDouble(int nRow, int nCol, ref double pOut)
 			{
 				if (m_pResult == null)
 					return false;
 				return m_pResult.GetDouble(nRow, nCol, ref pOut);
 			}
+			
 			public bool GetBlob(int nRow, int nCol, gsBlob pOut)
 			{
 				if (m_pResult == null)

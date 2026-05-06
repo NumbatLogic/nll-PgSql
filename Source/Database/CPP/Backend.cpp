@@ -282,18 +282,6 @@ namespace NumbatLogic
 							pParamTypes[i] = INT8OID;
 							break;
 						}
-						case Value::Type::UINT32:
-						{
-							unsigned int v = pQuery->GetParameterUint32(i);
-							uint32_t net = htonl(static_cast<uint32_t>(v));
-							paramBinary[static_cast<size_t>(i)].resize(sizeof(net));
-							memcpy(paramBinary[static_cast<size_t>(i)].data(), &net, sizeof(net));
-							pParamValues[i] = reinterpret_cast<const char*>(paramBinary[static_cast<size_t>(i)].data());
-							pParamLengths[i] = static_cast<int>(sizeof(net));
-							pParamFormats[i] = 1;
-							pParamTypes[i] = INT4OID;
-							break;
-						}
 						case Value::Type::DOUBLE:
 						{
 							double v = pQuery->GetParameterDouble(i);

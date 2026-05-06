@@ -94,56 +94,6 @@ namespace NumbatLogic.Database
 			return false;
 		}
 
-		private static bool TryGetUnsignedIntegral(object value, out ulong outVal)
-		{
-			outVal = 0;
-			if (value is byte b) { outVal = b; return true; }
-			if (value is ushort us) { outVal = us; return true; }
-			if (value is uint ui) { outVal = ui; return true; }
-			if (value is ulong ul) { outVal = ul; return true; }
-			if (value is sbyte sb)
-			{
-				if (sb < 0)
-					return false;
-				outVal = (ulong)sb;
-				return true;
-			}
-			if (value is short sh)
-			{
-				if (sh < 0)
-					return false;
-				outVal = (ulong)sh;
-				return true;
-			}
-			if (value is int i)
-			{
-				if (i < 0)
-					return false;
-				outVal = (ulong)i;
-				return true;
-			}
-			if (value is long l)
-			{
-				if (l < 0)
-					return false;
-				outVal = (ulong)l;
-				return true;
-			}
-			return false;
-		}
-
-		public bool GetInt8(int nRow, int nCol, ref sbyte pOut)
-		{
-			if (!TryGetCell(nRow, nCol, out object value))
-				return false;
-			if (!TryGetSignedIntegral(value, out long signedVal))
-				return false;
-			if (signedVal < sbyte.MinValue || signedVal > sbyte.MaxValue)
-				return false;
-			pOut = (sbyte)signedVal;
-			return true;
-		}
-
 		public bool GetInt16(int nRow, int nCol, ref short pOut)
 		{
 			if (!TryGetCell(nRow, nCol, out object value))
@@ -175,42 +125,6 @@ namespace NumbatLogic.Database
 			if (!TryGetSignedIntegral(value, out long signedVal))
 				return false;
 			pOut = signedVal;
-			return true;
-		}
-
-		public bool GetUint8(int nRow, int nCol, ref byte pOut)
-		{
-			if (!TryGetCell(nRow, nCol, out object value))
-				return false;
-			if (!TryGetUnsignedIntegral(value, out ulong unsignedVal))
-				return false;
-			if (unsignedVal > byte.MaxValue)
-				return false;
-			pOut = (byte)unsignedVal;
-			return true;
-		}
-
-		public bool GetUint16(int nRow, int nCol, ref ushort pOut)
-		{
-			if (!TryGetCell(nRow, nCol, out object value))
-				return false;
-			if (!TryGetUnsignedIntegral(value, out ulong unsignedVal))
-				return false;
-			if (unsignedVal > ushort.MaxValue)
-				return false;
-			pOut = (ushort)unsignedVal;
-			return true;
-		}
-
-		public bool GetUint32(int nRow, int nCol, ref uint pOut)
-		{
-			if (!TryGetCell(nRow, nCol, out object value))
-				return false;
-			if (!TryGetUnsignedIntegral(value, out ulong unsignedVal))
-				return false;
-			if (unsignedVal > uint.MaxValue)
-				return false;
-			pOut = (uint)unsignedVal;
 			return true;
 		}
 

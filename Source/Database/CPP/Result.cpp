@@ -163,17 +163,6 @@ namespace NumbatLogic
 		return true;
 		}
 
-		bool Result::GetInt8(int nRow, int nCol, signed char& outVal)
-		{
-			int64_t nBinary = 0;
-			if (!TryGetBinaryInt64(m_pResult, nRow, nCol, nBinary))
-				return false;
-			if (nBinary < std::numeric_limits<signed char>::min() || nBinary > std::numeric_limits<signed char>::max())
-				return false;
-			outVal = static_cast<signed char>(nBinary);
-			return true;
-		}
-
 		bool Result::GetInt16(int nRow, int nCol, short& outVal)
 		{
 			int64_t nBinary = 0;
@@ -202,39 +191,6 @@ namespace NumbatLogic
 			if (!TryGetBinaryInt64(m_pResult, nRow, nCol, nBinary))
 				return false;
 			outVal = static_cast<long long>(nBinary);
-			return true;
-		}
-
-		bool Result::GetUint8(int nRow, int nCol, unsigned char& outVal)
-		{
-			int64_t nBinary = 0;
-			if (!TryGetBinaryInt64(m_pResult, nRow, nCol, nBinary))
-				return false;
-			if (nBinary < 0 || nBinary > std::numeric_limits<unsigned char>::max())
-				return false;
-			outVal = static_cast<unsigned char>(nBinary);
-			return true;
-		}
-
-		bool Result::GetUint16(int nRow, int nCol, unsigned short& outVal)
-		{
-			int64_t nBinary = 0;
-			if (!TryGetBinaryInt64(m_pResult, nRow, nCol, nBinary))
-				return false;
-			if (nBinary < 0 || nBinary > std::numeric_limits<unsigned short>::max())
-				return false;
-			outVal = static_cast<unsigned short>(nBinary);
-			return true;
-		}
-
-		bool Result::GetUint32(int nRow, int nCol, unsigned int& outVal)
-		{
-			int64_t nBinary = 0;
-			if (!TryGetBinaryInt64(m_pResult, nRow, nCol, nBinary))
-				return false;
-			if (nBinary < 0 || static_cast<uint64_t>(nBinary) > std::numeric_limits<unsigned int>::max())
-				return false;
-			outVal = static_cast<unsigned int>(nBinary);
 			return true;
 		}
 

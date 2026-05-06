@@ -5,7 +5,6 @@ namespace NumbatLogic
 		class Value
 		{
 			public enum Type {
-				UINT32,
 				STRING,
 				BLOB,
 				INT16,
@@ -16,7 +15,6 @@ namespace NumbatLogic
 			}
 
 			public Type __eType;
-			public Uint32 __nUint32;
 			public Int32 __nInt32;
 			public Int16 __nInt16;
 			public bool __bBool;
@@ -24,12 +22,6 @@ namespace NumbatLogic
 			public Int64 __nInt64;
 			public InternalString* __sString;
 			public gsBlob* __pBlob;
-
-			public construct(Uint32 nUint32)
-			{
-				__eType = Type::UINT32;
-				__nUint32 = nUint32;
-			}
 
 			public construct(Int32 nValue)
 			{
@@ -89,12 +81,6 @@ namespace NumbatLogic
 			{
 				Assert::Plz(__eType == Type::BLOB);
 				return __pBlob;
-			}
-
-			public Uint32 GetUint32()
-			{
-				Assert::Plz(__eType == Type::UINT32);
-				return __nUint32;
 			}
 
 			public Int32 GetInt32()

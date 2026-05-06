@@ -167,9 +167,6 @@ namespace NumbatLogic.Database
 						string paramName = "p" + (i + 1).ToString();
 						switch (pQuery.GetParameterType(i))
 						{
-							case Value.Type.UINT32:
-								cmd.Parameters.AddWithValue(paramName, pQuery.GetParameterUint32(i));
-								break;
 							case Value.Type.INT32:
 								cmd.Parameters.AddWithValue(paramName, pQuery.GetParameterInt32(i));
 								break;
