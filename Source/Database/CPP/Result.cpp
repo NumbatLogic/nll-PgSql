@@ -196,6 +196,15 @@ namespace NumbatLogic
 			return true;
 		}
 
+		bool Result::GetInt64(int nRow, int nCol, long long& outVal)
+		{
+			int64_t nBinary = 0;
+			if (!TryGetBinaryInt64(m_pResult, nRow, nCol, nBinary))
+				return false;
+			outVal = static_cast<long long>(nBinary);
+			return true;
+		}
+
 		bool Result::GetUint8(int nRow, int nCol, unsigned char& outVal)
 		{
 			int64_t nBinary = 0;

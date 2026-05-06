@@ -173,6 +173,9 @@ namespace NumbatLogic.Database
 							case Value.Type.INT32:
 								cmd.Parameters.AddWithValue(paramName, pQuery.GetParameterInt32(i));
 								break;
+							case Value.Type.INT64:
+								cmd.Parameters.AddWithValue(paramName, pQuery.GetParameterInt64(i));
+								break;
 							case Value.Type.INT16:
 								cmd.Parameters.AddWithValue(paramName, pQuery.GetParameterInt16(i));
 								break;

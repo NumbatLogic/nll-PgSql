@@ -168,6 +168,16 @@ namespace NumbatLogic.Database
 			return true;
 		}
 
+		public bool GetInt64(int nRow, int nCol, ref long pOut)
+		{
+			if (!TryGetCell(nRow, nCol, out object value))
+				return false;
+			if (!TryGetSignedIntegral(value, out long signedVal))
+				return false;
+			pOut = signedVal;
+			return true;
+		}
+
 		public bool GetUint8(int nRow, int nCol, ref byte pOut)
 		{
 			if (!TryGetCell(nRow, nCol, out object value))

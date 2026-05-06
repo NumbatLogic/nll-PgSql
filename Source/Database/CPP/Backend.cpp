@@ -7,6 +7,7 @@
 #include "../../../../LangShared/Source/Blob/CPP/Blob.hpp"
 
 #include <arpa/inet.h>
+#include <cstdint>
 #include <cstring>
 #include <vector>
 #include <libpq-fe.h>
@@ -18,6 +19,7 @@ namespace NumbatLogic
 		static const Oid BOOLOID = 16;
 		static const Oid INT2OID = 21;
 		static const Oid INT4OID = 23;
+		static const Oid INT8OID = 20;
 		static const Oid FLOAT4OID = 700;
 		static const Oid FLOAT8OID = 701;
 		static const Oid BYTEAOID = 17;
@@ -265,6 +267,19 @@ namespace NumbatLogic
 							pParamLengths[i] = static_cast<int>(sizeof(net));
 							pParamFormats[i] = 1;
 							pParamTypes[i] = INT4OID;
+							break;
+						}
+						case Value::Type::INT64:
+						{
+							int64_t v = static_cast<int64_t>(pQuery->GetParameterInt64(i));
+							uint64_t raw = static_cast<uint64_t>(v);
+							raw = HostToNetwork64(raw);
+							paramBinary[static_cast<size_t>(i)].resize(sizeof(raw));
+							memcpy(paramBinary[static_cast<size_t>(i)].data(), &raw, sizeof(raw));
+							pParamValues[i] = reinterpret_cast<const char*>(paramBinary[static_cast<size_t>(i)].data());
+							pParamLengths[i] = static_cast<int>(sizeof(raw));
+							pParamFormats[i] = 1;
+							pParamTypes[i] = INT8OID;
 							break;
 						}
 						case Value::Type::UINT32:

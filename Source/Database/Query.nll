@@ -43,6 +43,12 @@ namespace NumbatLogic
 				__pValue = own new Value(nValue);
 			}
 
+			public construct(string sxName, Int64 nValue)
+			{
+				__sName = own new InternalString(sxName);
+				__pValue = own new Value(nValue);
+			}
+
 			public construct(string sxName, double fValue)
 			{
 				__sName = own new InternalString(sxName);
@@ -74,6 +80,12 @@ namespace NumbatLogic
 			}
 
 			public void SetParameterInt32(string sxName, Int32 nValue)
+			{
+				QueryParameter* pParameter = own new QueryParameter(sxName, nValue);
+				m_pParameterVector.PushBack(disown pParameter);
+			}
+
+			public void SetParameterInt64(string sxName, Int64 nValue)
 			{
 				QueryParameter* pParameter = own new QueryParameter(sxName, nValue);
 				m_pParameterVector.PushBack(disown pParameter);
@@ -157,6 +169,11 @@ namespace NumbatLogic
 				return m_pParameterVector.Get(nIndex).__pValue.GetInt32();
 			}
 
+			public Int64 GetParameterInt64(int nIndex)
+			{
+				return m_pParameterVector.Get(nIndex).__pValue.GetInt64();
+			}
+
 			public Int16 GetParameterInt16(int nIndex)
 			{
 				return m_pParameterVector.Get(nIndex).__pValue.GetInt16();
@@ -233,6 +250,12 @@ namespace NumbatLogic
 				if (m_pResult == null)
 					return false;
 				return m_pResult.GetInt32(nRow, nCol, ref pOut);
+			}
+			public bool GetInt64(int nRow, int nCol, ref Int64 pOut)
+			{
+				if (m_pResult == null)
+					return false;
+				return m_pResult.GetInt64(nRow, nCol, ref pOut);
 			}
 			public bool GetUint8(int nRow, int nCol, ref Uint8 pOut)
 			{

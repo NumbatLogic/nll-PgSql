@@ -12,6 +12,7 @@ namespace NumbatLogic
 				INT32,
 				BOOL,
 				DOUBLE,
+				INT64,
 			}
 
 			public Type __eType;
@@ -20,6 +21,7 @@ namespace NumbatLogic
 			public Int16 __nInt16;
 			public bool __bBool;
 			public double __fDouble;
+			public Int64 __nInt64;
 			public InternalString* __sString;
 			public gsBlob* __pBlob;
 
@@ -68,6 +70,12 @@ namespace NumbatLogic
 				__fDouble = fValue;
 			}
 
+			public construct(Int64 nValue)
+			{
+				__eType = Type::INT64;
+				__nInt64 = nValue;
+			}
+
 			public string GetAsString()
 			{
 				if (__eType != Type::STRING)
@@ -111,6 +119,12 @@ namespace NumbatLogic
 			{
 				Assert::Plz(__eType == Type::DOUBLE);
 				return __fDouble;
+			}
+
+			public Int64 GetInt64()
+			{
+				Assert::Plz(__eType == Type::INT64);
+				return __nInt64;
 			}
 
 			public string GetTextExternal()
